@@ -10,6 +10,7 @@ class App {
     
     constructor() {
         this.params = {}
+        this._pools = []
         
         program
             .option('-i, --interactive', 'Turn ON the interactive mode')
@@ -42,11 +43,10 @@ class App {
             await fn()
         } catch (err) {
             console.error(err)
-            return false
         }
-        console.log('time to kill')
-        SSHClient.killThemAll()
-        return true
+        
+        this.destroy()
+        return this
     }
     
     async exec(cmd){
@@ -75,6 +75,8 @@ class App {
             agent: 'pageant',
             agentForward: true
         })
+    
+        this._pools.push(ssh)
         
         return ssh
     }
@@ -83,9 +85,16 @@ class App {
     /**
      * @return Console
      */
-    async log(){
+    async bash(){
         return Console
     }
+    
+    destroy(){
+        while (this._pools.length) {
+            this._pools.shift().disconnect()
+        }
+    }
+    
     
 }
 

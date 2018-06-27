@@ -3,20 +3,12 @@
 const promisify = require('util').promisify;
 const SSH2 = require('ssh2'); // TODO: check security
 
-let SSHPool = []
 
 class SSHClient {
-    
-    static killThemAll() {
-        while (SSHPool.length) {
-            SSHPool.shift().disconnect()
-        }
-    }
     
     constructor() {
         this._ssh = null
         this._cwd = ''
-        SSHPool.push(this)
     }
     
     
