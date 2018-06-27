@@ -15,6 +15,7 @@ class SSHClient {
     
     constructor() {
         this._ssh = null
+        this._cwd = ''
         SSHPool.push(this)
     }
     
@@ -23,7 +24,7 @@ class SSHClient {
      * @param {object} cfg
      */
     async connect(cfg) {
-        await promisify(this._connect.bind(this))(cfg)
+        return promisify(this._connect.bind(this))(cfg)
     }
     
     async disconnect() {
@@ -37,7 +38,7 @@ class SSHClient {
      * @param {string} cmd
      */
     async exec(cmd) {
-        await promisify(this._exec.bind(this))(cmd)
+        return promisify(this._exec.bind(this))(cmd)
     }
     
     
@@ -45,7 +46,7 @@ class SSHClient {
      * @param dir
      */
     async chdir(dir) {
-        return this.exec(`cd ${dir}`)
+        this._cwd = await this.exec(`cd ${dir} && pwd`)
     }
     
     
@@ -76,6 +77,9 @@ class SSHClient {
     _exec(cmd, callback) {
         console.log('[ssh] >', cmd);
         if (!this._ssh) throw Error('Can not .exec commands before SSH is connected!')
+    
+        if (this._cwd) cmd = `cd ${this._cwd} && ` + cmd
+        // console.log('[ssh] >', cmd);
         this._ssh.exec(cmd, (err, stream) => {
             if (err) return callback(err);
             this._handleStream(stream, callback);
