@@ -4,7 +4,7 @@ const Config = require('./config/Config')
 const Console = require('./lib/Console')
 const SSHClient = require('./lib/SSHClient')
 const program = require('commander')
-
+const fs = require('fs')
 
 class App {
     
@@ -13,6 +13,7 @@ class App {
         this._pools = []
         
         program
+            .option('-p, --parallel [limit]', 'When run with multiple hosts define how many commands to be executed in parallel. Set to 0 execute them all together. By default will be executed sequentially')
             .option('-i, --interactive', 'Turn ON the interactive mode')
             .option('-f, --force', 'Suppress confirm messages (used for automation)')
             .option('-c, --config <path>', 'Path to custom config file')
@@ -23,29 +24,82 @@ class App {
     /**
      * @param {string} flags
      * @param {string} [description]
-     * @param {string|function} [def] function or default
-     * @returns {Command} for chaining
+     * @param {string} [options]
+     *    @option {string|function} [def]
+     *    @option {array} [choices]
+     *    @option {bool}  [loop]
+     * @return this
      */
-    option(flags, description, def){
-        program.option(flags, description, def)
+    option(flags, description = '', { def, choices } = {}){
+        program.option(flags, description, (val) => {
+            if(!choices || !Array.isArray(choices) || !choices.length) return
+            if(val === 'all') return choices.slice()
+            let values = val.split(',')
+            values.forEach(v => {
+                if(!choices.includes(v)) throw Error(`There is no such choice ${v}. Available: ${choices}`)
+            })
+            return values
+        }, def)
+        
         return this
     }
     
     /**
+     * Alias of once method
      * @param {function} fn
-     * @return boolean
+     * @return this
      */
-    async run(fn){
-        program.parse(process.argv)
-        this.params = program // TODO: temporary, we should expose only the parsed arguments, see console.log(program)
-        
+    async run(fn) {
+        return this.once(fn)
+    }
+    
+    /**
+     * @param {function} fn
+     * @return this
+     */
+    async once(fn){
         try {
+            program.parse(process.argv)
+            this.params = program // TODO: temporary, we should expose only the parsed arguments, see console.log(program)
             await fn()
-        } catch (err) {
-            console.error(err)
         }
-        
+        catch (err) {
+            this._errorHandler(err)
+        }
         this.destroy()
+    
+        return this
+    }
+    
+    /**
+     * @param {string}   option - specify by which option to loop, normally is 'hosts'
+     * @param {function} fn
+     * @return this
+     */
+    async loop(option = 'hosts', fn) {
+        try {
+            program.parse(process.argv)
+            this.params = program // TODO: temporary, we should expose only the parsed arguments, see console.log(program)
+            if(!this.params[option] || !Array.isArray(this.params[option])){
+                throw Error(`The loop option ${option} is invalid or missing!`)
+            }
+            if (this.params.parallel !== undefined) {
+                throw Error(`TODO: support parallelizm`)
+            }
+            
+            let HOSTS = this.params[option]
+            for(let host of HOSTS) {
+                if(HOSTS.length > 1) {
+                    console.log(`\n-- ${host} -----------------------------------------`)
+                }
+                await fn(host)
+            }
+        }
+        catch (err) {
+            this._errorHandler(err)
+        }
+        this.destroy()
+        
         return this
     }
     
@@ -95,6 +149,12 @@ class App {
         }
     }
     
+    
+    _errorHandler(err) {
+        console.error('ERROR:', err)
+        this.destroy()
+        process.exit(1)
+    }
     
 }
 
