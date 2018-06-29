@@ -1,6 +1,6 @@
 'use strict'
 
-const request = require('request-promise-native') //TODO //@ grr too many deps
+const fetch = require('node-fetch')
 
 
 const API = 'https://api.cloudflare.com/client/v4'
@@ -20,7 +20,7 @@ class CloudFlare {
     async delete(url, json) { return this.request({url, method: 'DELETE', json }) }
     async patch(url, json)  { return this.request({url, method: 'PATCH',  json }) }
     
-    async request({url, method = 'GET', json = true}) {
+    async request({url, method = 'GET', json = null}) {
         console.log(`Cloudflare ${method} ${url}`)
         
         let options = {
@@ -31,15 +31,14 @@ class CloudFlare {
                 'X-Auth-Email': this._email,
                 'X-Auth-Key': this._key
             },
-            json: json,
-            resolveWithFullResponse: true
+            body: json ? JSON.stringify(json) : null
         }
         
         
         let result
         try {
-            let response = await request(options)
-            result = response.body
+            const response = await fetch(options.url, options)
+            const result = await response.json()
             console.log(JSON.stringify(result, null, 4))
         }
         catch (err) {

@@ -1,6 +1,6 @@
 'use strict'
 
-const request = require('request')
+const fetch = require('node-fetch')
 const dummyError = (err) => { if (err) console.error(err) }
 
 
@@ -27,18 +27,13 @@ class HipChat {
             headers: {
                 'Content-Type': 'application/json'
             },
-            json: { color,  message,  notify,  message_format }
+            body: JSON.stringify({ color,  message,  notify,  message_format })
         }
         
-        request(options, (error, response, body) => {
-            if (!error && (response.statusCode === 200 || response.statusCode === 204)) {
-                // console.info('success', response.statusCode)
-                callback()
-            } else {
-                // console.error(body)
-                callback(error || 'Response error:\n' + JSON.stringify(body, null, 2) + '\n')
-            }
-        });
+        fetch(options.url, options)
+            .then(res => res.json())
+            .then(json => callback())
+            .catch(err => callback(error || 'Response error:\n' + err + '\n'))
     }
 }
 
