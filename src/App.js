@@ -80,8 +80,12 @@ class App {
         try {
             program.parse(process.argv)
             this.params = program // TODO: temporary, we should expose only the parsed arguments, see console.log(program)
+    
+            if (!option || !fn || typeof option !== 'string' || typeof fn !== 'function') {
+                throw Error(`Invalid arguments! Expected deployer.loop(string, function), received deployer.loop(${typeof option}, ${typeof fn})`)
+            }
             if(!this.params[option] || !Array.isArray(this.params[option])){
-                throw Error(`The loop option ${option} is invalid or missing!`)
+                throw Error(`Invalid paramater option:(${option})! It's expected to be array and to be predefined as cli option`)
             }
             if (this.params.parallel !== undefined) {
                 throw Error(`TODO: support parallelizm`)
@@ -116,11 +120,11 @@ class App {
     }
     
     /**
-     * @return {Promise<SSH>}
+     * @return {Promise<SSHClient>}
      */
     async ssh(host, user){
         let cfg = Config.servers.find(s => s.name === host)
-        if(!cfg) throw Error('There is no such server in our configuration:' + host)
+        if(!cfg) throw Error('There is no such server in our configuration: ' + host)
         
         let ssh = new SSHClient(host)
         await ssh.connect({
@@ -131,6 +135,7 @@ class App {
         })
     
         this._pools.push(ssh)
+        
         
         return ssh
     }
