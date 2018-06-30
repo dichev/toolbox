@@ -2,9 +2,11 @@
 
 const Config = require('./config/Config')
 const Console = require('./lib/Console')
+const Pattern = require('./lib/Pattern')
 const SSHClient = require('./lib/SSHClient')
 const program = require('commander')
 const fs = require('fs')
+
 
 class App {
     
@@ -33,11 +35,10 @@ class App {
      */
     option(flags, description = '', { def, choices } = {}){
         program.option(flags, description, (val) => {
-            if(!choices || !Array.isArray(choices) || !choices.length) return
+            if(!choices || !Array.isArray(choices) || !choices.length) return val
             if(val === 'all') return choices.join(',')
-            val.split(',').forEach(v => {
-                if(!choices.includes(v)) throw Error(`There is no such choice ${v}. Available: ${choices}`)
-            })
+            let values = val.includes(',') ? val.split(',') : [val]
+            val = Pattern.intersect(values, choices, true).join(',')
             return val
         }, def)
         
@@ -65,19 +66,13 @@ class App {
     
             let HOSTS = null
             
-            if (typeof fn !== 'function') {
-                throw Error(`Invalid arguments! Expected deployer.run(async function), received deployer.run(${typeof fn})`)
-            }
-            if (this.params.parallel !== undefined) {
-                throw Error(`TODO: support parallelizm`)
-            }
+            if (typeof fn !== 'function') throw Error(`Invalid arguments! Expected deployer.run(async function), received deployer.run(${typeof fn})`)
+            if (this.params.parallel !== undefined) throw Error(`TODO: support parallelism`)
             
             if(this._loopBy) {
                 let param = this.params[this._loopBy]
-                if(!param){
-                    throw Error(`Invalid paramater option:(${this._loopBy})! It's expected to be array and to be predefined as cli option`)
-                }
-    
+                if(!param) throw Error(`Invalid parameter option:(${this._loopBy})! It's expected to be array and to be predefined as cli option`)
+                
                 HOSTS = param.split(',')
             }
             
