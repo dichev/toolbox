@@ -60,7 +60,7 @@ class App {
     async run(fn) {
         try {
             program.parse(process.argv)
-            this.params = program // TODO: temporary, we should expose only the parsed arguments, see console.log(program)
+            this.params = program.opts()
     
             let iterations = []
             let parallel = false
