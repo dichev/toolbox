@@ -4,7 +4,7 @@
   "private": true,
   "main": "./index.js",
   "scripts": {
-    "dev": "node test/dev --hosts dev-hermes-w*"
+    "dev": "node test/dev --hosts dev-hermes-w* --verbose"
   },
   "dependencies": {
     "colors": "^1.3.0",

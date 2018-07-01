@@ -121,9 +121,12 @@ class App {
     }
     
     /**
-     * @return {Promise<SSHClient>}
+     * @param {string} host
+     * @param {string} user
+     * @param {string} [cmd]
+     * @return {Promise<SSHClient>|null}
      */
-    async ssh(host, user){
+    async ssh(host, user, cmd = ''){
         let ssh = new SSHClient(this.verbose)
         await ssh.connect({
             host: host,
@@ -134,8 +137,19 @@ class App {
     
         this._pools.push(ssh)
         
-        
-        return ssh
+        if(cmd){
+            try {
+                await ssh.exec(cmd)
+            } catch (err) {
+                await ssh.disconnect()
+                throw err
+            }
+            return null
+        }
+        else {
+            this._pools.push(ssh)
+            return ssh
+        }
     }
     
     
