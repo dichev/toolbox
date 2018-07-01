@@ -89,13 +89,13 @@ class App {
                 await fn()
             }
             else if(parallel){
-                console.log(`\n-- Running in parallel(${parallelLimit}): ${iterations} -----------------------------------------`)
+                console.info(`\n-- Running in parallel(${parallelLimit}): ${iterations} -----------------------------------------`)
                 let fnPromises = iterations.map(host => () => fn(host))
                 await Chain.parallelLimit(parallelLimit, fnPromises)
             }
             else {
                 for (let host of iterations) {
-                    console.log(`\n-- ${host} -----------------------------------------`)
+                    console.info(`\n-- ${host} -----------------------------------------`)
                     await fn(host)
                 }
             }

@@ -2,6 +2,8 @@
 
 const readline = require('readline')
 const spawn = require('child_process').spawn
+const console = require('./Log')
+const v = console.verbose
 
 class Console {
     

@@ -25,7 +25,8 @@ deployer
     .run(async (host) => {
         let ssh = await deployer.ssh(HOSTS.find(h => h.name === host).ip, 'root')
     
-        await ssh.exec('cd /opt/dopamine/sys-metrics && git describe --tags')
+        await ssh.chdir('/opt/dopamine/sys-metrics')
+        await ssh.exec('git describe --tags')
         await ssh.exec('systemctl status sys-metrics | grep Active')
     })
 

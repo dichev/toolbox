@@ -1,7 +1,7 @@
 'use strict'
 
 const fetch = require('node-fetch')
-
+const console = require('../lib/Log')
 
 const API = 'https://api.cloudflare.com/client/v4'
 
@@ -21,7 +21,7 @@ class CloudFlare {
     async patch(url, json)  { return this.request({url, method: 'PATCH',  json }) }
     
     async request({url, method = 'GET', json = null}) {
-        console.log(`Cloudflare ${method} ${url}`)
+        console.verbose(`Cloudflare ${method} ${url}`)
         
         let options = {
             url: `${API}/zones/${this._zone}/${url}`,

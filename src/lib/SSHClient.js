@@ -7,10 +7,11 @@ const v = console.verbose
 
 class SSHClient {
     
-    constructor(verbose = false) {
+    constructor() {
         this._ssh = null
         this._cwd = ''
-        this._verbose = verbose
+        
+        this._location = ''
     }
     
     
@@ -42,22 +43,24 @@ class SSHClient {
     async chdir(dir) {
         this._cwd = await this.exec(`cd ${dir} && pwd`)
     }
-    
+   
     
     /**
      * @param {object} cfg
      * @param {function} callback
      */
     _connect(cfg, callback) {
-        v('[ssh] Connecting to %s@%s via ssh..', cfg.username, cfg.host);
+        this._location = cfg.username + '@' + cfg.host
+        v(`[ssh] Connecting to ${this._location} via ssh..`);
         
         this._ssh = new SSH2();
-        this._ssh.on('ready', () => {
-            v('[ssh] Connected successfully..');
-            callback();
-        })
+        this._ssh
+            .on('ready', () => {
+                // v(`[ssh] Connected successfully: ${this._location}`);
+                callback();
+            })
             .on('end', (data) => {
-                v('[ssh] SSH connection closed');
+                v(`[ssh] SSH connection closed: ${this._location}`);
                 this._ssh = null;
             })
             .on('error', callback)
@@ -69,11 +72,11 @@ class SSHClient {
      * @param {function} callback
      */
     _exec(cmd, callback) {
-        v('[ssh] >', cmd);
+        v(`${this._location}:${this._cwd}$`, cmd);
         if (!this._ssh) throw Error('Can not .exec commands before SSH is connected!')
     
         if (this._cwd) cmd = `cd ${this._cwd} && ` + cmd
-        // v('[ssh] >', cmd);
+        
         this._ssh.exec(cmd, (err, stream) => {
             if (err) return callback(err);
             this._handleStream(stream, callback);
