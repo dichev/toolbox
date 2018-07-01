@@ -2,9 +2,9 @@
 
 const Console = require('./lib/Console')
 const Pattern = require('./lib/Pattern')
+const Chain = require('./lib/Chain')
 const SSHClient = require('./lib/SSHClient')
 const program = require('commander')
-const fs = require('fs')
 
 
 class App {
@@ -29,7 +29,7 @@ class App {
      *    @option {string|function} [def]
      *    @option {array} [choices]
      *    @option {bool}  [loop]
-     * @return this
+     * @return App
      */
     option(flags, description = '', { def, choices } = {}){
         program.option(flags, description, (val) => {
@@ -45,7 +45,7 @@ class App {
     
     /**
      * @param {string}   option - specify by which option to loop, normally is 'hosts'
-     * @return this
+     * @return App
      */
     loop(option = 'hosts'){
         this._loopBy = option
@@ -55,34 +55,45 @@ class App {
    
     /**
      * @param {function} fn
-     * @return this
+     * @return App
      */
     async run(fn) {
         try {
             program.parse(process.argv)
             this.params = program // TODO: temporary, we should expose only the parsed arguments, see console.log(program)
     
-            let HOSTS = null
+            let iterations = []
+            let parallel = false
+            let parallelLimit = 0
             
             if (typeof fn !== 'function') throw Error(`Invalid arguments! Expected deployer.run(async function), received deployer.run(${typeof fn})`)
-            if (this.params.parallel !== undefined) throw Error(`TODO: support parallelism`)
+            
+            if (this.params.parallel !== undefined) {
+                let limit = this.params.parallel === true ? 0 : parseInt(this.params.parallel)
+                if(limit < 0) throw Error(`Invalid value of ${limit} for --parallel <limit>`)
+                parallel = true
+                parallelLimit = limit
+            }
             
             if(this._loopBy) {
                 let param = this.params[this._loopBy]
                 if(!param) throw Error(`Invalid parameter option:(${this._loopBy})! It's expected to be array and to be predefined as cli option`)
-                
-                HOSTS = param.split(',')
+    
+                iterations = param.split(',')
             }
             
             
-            if(!HOSTS){
+            if(!iterations.length){
                 await fn()
             }
+            else if(parallel){
+                console.log(`\n-- Running in parallel(${parallelLimit}): ${iterations} -----------------------------------------`)
+                let fnPromises = iterations.map(host => () => fn(host))
+                await Chain.parallelLimit(parallelLimit, fnPromises)
+            }
             else {
-                for (let host of HOSTS) {
-                    if (HOSTS.length > 1) {
-                        console.log(`\n-- ${host} -----------------------------------------`)
-                    }
+                for (let host of iterations) {
+                    console.log(`\n-- ${host} -----------------------------------------`)
                     await fn(host)
                 }
             }
