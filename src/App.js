@@ -1,6 +1,5 @@
 'use strict'
 
-const Config = require('./config/Config')
 const Console = require('./lib/Console')
 const Pattern = require('./lib/Pattern')
 const SSHClient = require('./lib/SSHClient')
@@ -19,7 +18,6 @@ class App {
             .option('-p, --parallel [limit]', 'When run with multiple hosts define how many commands to be executed in parallel. Set to 0 execute them all together. By default will be executed sequentially')
             .option('-i, --interactive', 'Turn ON the interactive mode')
             .option('-f, --force', 'Suppress confirm messages (used for automation)')
-            .option('-c, --config <path>', 'Path to custom config file')
             .version(require('../package.json').version)
         
     }
