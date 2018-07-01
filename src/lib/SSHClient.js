@@ -2,13 +2,15 @@
 
 const promisify = require('util').promisify;
 const SSH2 = require('ssh2'); // TODO: check security
-
+const console = require('./Log')
+const v = console.verbose
 
 class SSHClient {
     
-    constructor() {
+    constructor(verbose = false) {
         this._ssh = null
         this._cwd = ''
+        this._verbose = verbose
     }
     
     
@@ -47,15 +49,15 @@ class SSHClient {
      * @param {function} callback
      */
     _connect(cfg, callback) {
-        console.log('[ssh] Connecting to %s@%s via ssh..', cfg.username, cfg.host);
+        v('[ssh] Connecting to %s@%s via ssh..', cfg.username, cfg.host);
         
         this._ssh = new SSH2();
         this._ssh.on('ready', () => {
-            console.log('[ssh] Connected successfully..');
+            v('[ssh] Connected successfully..');
             callback();
         })
             .on('end', (data) => {
-                console.log('[ssh] SSH connection closed');
+                v('[ssh] SSH connection closed');
                 this._ssh = null;
             })
             .on('error', callback)
@@ -67,11 +69,11 @@ class SSHClient {
      * @param {function} callback
      */
     _exec(cmd, callback) {
-        console.log('[ssh] >', cmd);
+        v('[ssh] >', cmd);
         if (!this._ssh) throw Error('Can not .exec commands before SSH is connected!')
     
         if (this._cwd) cmd = `cd ${this._cwd} && ` + cmd
-        // console.log('[ssh] >', cmd);
+        // v('[ssh] >', cmd);
         this._ssh.exec(cmd, (err, stream) => {
             if (err) return callback(err);
             this._handleStream(stream, callback);

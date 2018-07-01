@@ -5,11 +5,12 @@ const Pattern = require('./lib/Pattern')
 const Chain = require('./lib/Chain')
 const SSHClient = require('./lib/SSHClient')
 const program = require('commander')
-
+const console = require('./lib/Log')
 
 class App {
     
     constructor() {
+        this.verbose = false
         this.params = {}
         this._pools = []
         this._loopBy = null
@@ -17,6 +18,7 @@ class App {
         program
             .option('-p, --parallel [limit]', 'When run with multiple hosts define how many commands to be executed in parallel. Set to 0 execute them all together. By default will be executed sequentially')
             .option('-i, --interactive', 'Turn ON the interactive mode')
+            .option('-v, --verbose', 'Turn ON log details of whats happening')
             .option('-f, --force', 'Suppress confirm messages (used for automation)')
             .version(require('../package.json').version)
         
@@ -122,7 +124,7 @@ class App {
      * @return {Promise<SSHClient>}
      */
     async ssh(host, user){
-        let ssh = new SSHClient()
+        let ssh = new SSHClient(this.verbose)
         await ssh.connect({
             host: host,
             username: user,
