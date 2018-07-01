@@ -113,12 +113,9 @@ class App {
      * @return {Promise<SSHClient>}
      */
     async ssh(host, user){
-        let cfg = Config.servers.find(s => s.name === host)
-        if(!cfg) throw Error('There is no such server in our configuration: ' + host)
-        
-        let ssh = new SSHClient(host)
+        let ssh = new SSHClient()
         await ssh.connect({
-            host: cfg.ip,
+            host: host,
             username: user,
             agent: 'pageant',
             agentForward: true
