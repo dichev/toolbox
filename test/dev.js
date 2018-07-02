@@ -19,6 +19,7 @@ let deployer = new Deployer()
 
 
 deployer
+    .description('Testing script')
     .option('-h, --hosts <list|all>', 'The target host names', { choices: HOSTS.map(h => h.name) })
     .loop('hosts')
 

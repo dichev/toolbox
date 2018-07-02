@@ -1,6 +1,7 @@
 'use strict'
 
 const fetch = require('node-fetch')
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
 
 
 class HipChat {
@@ -16,11 +17,20 @@ class HipChat {
      * Full HipChat Api docs here: https://www.hipchat.com/docs/apiv2/method/send_room_notification
      *
      * @param {string}   message - May contain basic tags: a, b, i, strong, em, br, img, pre, code, lists, tables
-     * @param {string}  [color='green'] - Background color: yellow, green, red, purple, gray, random
-     * @param {boolean} [notify=true] - Whether this message should trigger a user popup notification
-     * @param {string}  [message_format='html'] - html or text
+     * @param {string}  [color] - Background color: yellow, green, red, purple, gray, random
+     * @param {boolean} [notify] - Whether this message should trigger a user popup notification
+     * @param {string}  [message_format'] - html or text
+     * @param {int}     [ms] - how many sec to wait until resolve the promise
      */
-    async notify(message = 'NO MESSAGE', {color = 'green', notify = true, message_format = 'html'} = {}) {
+    async notify(message = 'NO MESSAGE', {color = 'gray', notify = true, message_format = 'html'} = {}, ms = 200) {
+        if(!this._urlToken) return
+        // Do not wait response to avoid execution blocking by the HipChat http request
+        this.notifyWait(message, { color, notify, message_format }).then().catch(err => console)
+        await delay(ms)
+    }
+    
+    async notifyWait(message = 'NO MESSAGE', {color = 'gray', notify = true, message_format = 'html'} = {}) {
+        if (!this._urlToken) return
         // console.info(`# HipChat notification..`)
         
         let options = {

@@ -2,6 +2,7 @@
 
 const Console = require('./lib/Console')
 const Pattern = require('./lib/Pattern')
+const HipChat = require('./plugins/HipChat')
 const Chain = require('./lib/Chain')
 const SSHClient = require('./lib/SSHClient')
 const program = require('commander')
@@ -9,11 +10,14 @@ const console = require('./lib/Log')
 
 class App {
     
-    constructor() {
+    constructor({ chatToken = null } = {}) {
         this.verbose = false
         this.params = {}
+        this._description = ''
         this._pools = []
         this._loopBy = null
+    
+        this.chat = new HipChat(chatToken)
         
         program
             .option('-p, --parallel [limit]', 'When run with multiple hosts define how many commands to be executed in parallel. Set to 0 execute them all together. By default will be executed sequentially')
@@ -21,7 +25,16 @@ class App {
             .option('-v, --verbose', 'Turn ON log details of whats happening')
             .option('-f, --force', 'Suppress confirm messages (used for automation)')
             .version(require('../package.json').version)
-        
+    }
+    
+    /**
+     * @param text
+     * @return {App}
+     */
+    description(text){
+        program.description(text)
+        this._description = text
+        return this
     }
     
     /**
@@ -31,7 +44,7 @@ class App {
      *    @option {string|function} [def]
      *    @option {array} [choices]
      *    @option {bool}  [loop]
-     * @return App
+     * @return {App}
      */
     option(flags, description = '', { def, choices } = {}){
         program.option(flags, description, (val) => {
@@ -47,7 +60,7 @@ class App {
     
     /**
      * @param {string}   option - specify by which option to loop, normally is 'hosts'
-     * @return App
+     * @return {App}
      */
     loop(option = 'hosts'){
         this._loopBy = option
@@ -57,7 +70,7 @@ class App {
    
     /**
      * @param {function} fn
-     * @return App
+     * @return {App}
      */
     async run(fn) {
         try {
@@ -85,25 +98,33 @@ class App {
             }
             
             
+            // await this.chat.notify(`${host} | Running fo`)
+            await this.chat.notify('RUN: ' + (this._description || `Running ${this.actionName}`))
+            
             if(!iterations.length){
                 await fn()
             }
             else if(parallel){
                 console.info(`\n-- Running in parallel(${parallelLimit}): ${iterations} -----------------------------------------`)
-                let fnPromises = iterations.map(host => () => fn(host))
+                let fnPromises = iterations.map(host => async () => {
+                    await this.chat.notify(`${host} executing..`)
+                    return fn(host)
+                })
                 await Chain.parallelLimit(parallelLimit, fnPromises)
             }
             else {
                 for (let host of iterations) {
                     console.info(`\n-- ${host} -----------------------------------------`)
+                    await this.chat.notify(`${host} executing..`)
                     await fn(host)
                 }
             }
         }
         catch (err) {
-            this._errorHandler(err)
+            await this._errorHandler(err)
         }
         this.destroy()
+        await this.chat.notify(`Finished!`, {color: 'green'})
         
         return this
     }
@@ -152,7 +173,7 @@ class App {
         }
     }
     
-    
+   
     /**
      * @return Console
      */
@@ -166,10 +187,18 @@ class App {
         }
     }
     
+    get actionName() { // TODO: this is temporary until migration to deployer cli
+        let parts = process.argv[1].replace(/\\/g, '/').split('/')
+        let action = parts.pop().replace('.js', '')
+        let command = parts.pop()
+        return `$ ${command} ${action}`
+    }
     
-    _errorHandler(err) {
+    
+    async _errorHandler(err) {
         console.error('ERROR:', err)
         this.destroy()
+        await this.chat.notify(`Aborting due error: <br/> ${err.toString().replace(/\n/g, '<br/>')}`, {color: 'red'})
         process.exit(1)
     }
     
