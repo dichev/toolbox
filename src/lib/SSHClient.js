@@ -107,7 +107,7 @@ class SSHClient {
         process.stderr.on('data', (data) => {
             let stderr = data.toString().trim();
             _stderr += stderr + '\n';
-            console.error(stderr);
+            console.warn(stderr);
         });
     }
     
