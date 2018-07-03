@@ -10,7 +10,7 @@ const console = require('./lib/Log')
 
 class App {
     
-    constructor({ chatToken = null } = {}) {
+    constructor({chatToken = null } = {}) {
         this.verbose = false
         this.params = {}
         this._description = ''
@@ -47,6 +47,10 @@ class App {
      * @return {App}
      */
     option(flags, description = '', { def, choices } = {}){
+        if(def && choices){
+            if(!choices.includes(def)) throw Error(`The default option(${def}) is not allowed as choices`)
+        }
+        
         program.option(flags, description, (val) => {
             if(!choices || !Array.isArray(choices) || !choices.length) return val
             if(val === 'all') return choices.join(',')
