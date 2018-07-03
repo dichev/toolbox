@@ -107,7 +107,7 @@ class App {
             else if(parallel){
                 console.info(`\n-- Running in parallel(${parallelLimit}): ${iterations} -----------------------------------------`)
                 let fnPromises = iterations.map(host => async () => {
-                    await this.chat.notify(`${host} executing..`)
+                    await this.chat.notify(`Executing on ${host}..`)
                     return fn(host)
                 })
                 await Chain.parallelLimit(parallelLimit, fnPromises)
@@ -115,7 +115,7 @@ class App {
             else {
                 for (let host of iterations) {
                     console.info(`\n-- ${host} -----------------------------------------`)
-                    await this.chat.notify(`${host} executing..`)
+                    await this.chat.notify(`Executing on ${host}..`)
                     await fn(host)
                 }
             }
@@ -152,7 +152,7 @@ class App {
         await ssh.connect({
             host: host,
             username: user,
-            agent: 'pageant',
+            agent: process.env.SSH_AUTH_SOCK,
             agentForward: true
         })
     
