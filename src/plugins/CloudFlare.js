@@ -38,7 +38,7 @@ class CloudFlare {
         let result
         try {
             const response = await fetch(options.url, options)
-            const result = await response.json()
+            result = await response.json()
             console.log(JSON.stringify(result, null, 4))
         }
         catch (err) {
