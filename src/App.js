@@ -16,7 +16,7 @@ class App {
         this._description = ''
         this._pools = []
         this._loopBy = null
-    
+        
         this.chat = new HipChat(chatToken)
         
         program
@@ -25,6 +25,9 @@ class App {
             .option('-v, --verbose', 'Turn ON log details of whats happening')
             .option('-f, --force', 'Suppress confirm messages (used for automation)')
             .version(require('../package.json').version)
+    
+        process.on('uncaughtException', (err) => this._errorHandler(err))
+        process.on('unhandledRejection', (reason) => this._errorHandler(reason))
     }
     
     /**
@@ -47,13 +50,14 @@ class App {
      * @return {App}
      */
     option(flags, description = '', { def, choices } = {}){
-        if(def && choices){
-            if(!choices.includes(def)) throw Error(`The default option(${def}) is not allowed as choices`)
+        if (def && choices) {
+            if (!choices.includes(def)) throw Error(`The default option(${def}) is not allowed as choices`)
         }
-        
+        if(def) description += ` Default: ${def}`
+
         program.option(flags, description, (val) => {
-            if(!choices || !Array.isArray(choices) || !choices.length) return val
-            if(val === 'all') return choices.join(',')
+            if (!choices || !Array.isArray(choices) || !choices.length) return val
+            if (val === 'all') return choices.join(',')
             let values = val.includes(',') ? val.split(',') : [val]
             val = Pattern.intersect(values, choices, true).join(',')
             return val
@@ -198,12 +202,17 @@ class App {
         return `$ ${command} ${action}`
     }
     
-    
-    async _errorHandler(err) {
-        console.error('ERROR:', err)
+    /**
+     * @param {Error} err
+     * @private
+     */
+    _errorHandler(err) {
+        console.error(err.message)
+        console.verbose(err.stack)
+        
         this.destroy()
-        await this.chat.notify(`Aborting due error: <br/> ${err.toString().replace(/\n/g, '<br/>')}`, {color: 'red'})
-        process.exit(1)
+        this.chat.notify(`Aborting due error: <br/> ${err.message.replace(/\n/g, '<br/>')}`, {color: 'red'}).catch(console.error)
+        setTimeout(() => process.exit(1), 500)
     }
     
 }

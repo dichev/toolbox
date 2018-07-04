@@ -22,7 +22,7 @@ class SSHClient {
         return promisify(this._connect.bind(this))(cfg)
     }
     
-    async disconnect() {
+    disconnect() {
         if (this._ssh) {
             this._ssh.end()
             this._ssh = null
@@ -93,7 +93,7 @@ class SSHClient {
         let _stderr = '';
         
         process.on('close', (code) => {
-            let error = (code !== 0) ? new Error('code: ' + code + ' | stderr: \n' + _stderr) : null;
+            let error = (code !== 0) ? new Error(_stderr || 'Error code: ' + code) : null;
             callback(error, _stdout.trim(), _stderr.trim());
         });
         

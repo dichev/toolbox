@@ -22,7 +22,7 @@ class HipChat {
      * @param {string}  [message_format'] - html or text
      * @param {int}     [ms] - how many sec to wait until resolve the promise
      */
-    async notify(message = 'NO MESSAGE', {color = 'gray', notify = true, message_format = 'html'} = {}, ms = 200) {
+    async notify(message = 'NO MESSAGE', {color = 'gray', notify = true, message_format = 'html'} = {}, ms = 500) {
         if(!this._urlToken) return
         // Do not wait response to avoid execution blocking by the HipChat http request
         this.notifyWait(message, { color, notify, message_format }).then().catch(err => console)
@@ -52,7 +52,7 @@ class HipChat {
             result = err.error ? err.error : {success: false, msg: err.toString()}
             console.error(result)
         }
-    
+
         return result
     }
 }
