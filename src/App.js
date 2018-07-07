@@ -7,6 +7,7 @@ const Chain = require('./lib/Chain')
 const SSHClient = require('./lib/SSHClient')
 const program = require('commander')
 const console = require('./lib/Log')
+const isWin = require('os').platform() === 'win32'
 
 class App {
     
@@ -160,7 +161,7 @@ class App {
         await ssh.connect({
             host: host,
             username: user,
-            agent: process.env.SSH_AUTH_SOCK,
+            agent: isWin ? 'pageant' : process.env.SSH_AUTH_SOCK,
             agentForward: true
         })
     
