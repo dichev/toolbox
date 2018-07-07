@@ -9,7 +9,7 @@ class Pattern {
         if(!pattern.includes('*')) return pattern === string
         
         let escaped = pattern.replace(ESCAPED, '\\$&').replace(/\*/g, '.*')
-        let re = new RegExp(escaped, 'g')
+        let re = new RegExp(`^${escaped}$`, 'g')
         return re.test(string)
     }
     
