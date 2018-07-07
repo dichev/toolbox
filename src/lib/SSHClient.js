@@ -7,9 +7,10 @@ const v = console.verbose
 
 class SSHClient {
     
-    constructor() {
+    constructor(dryMode = false) {
         this._ssh = null
         this._cwd = ''
+        this._dryMode = dryMode
         
         this._location = ''
     }
@@ -74,7 +75,8 @@ class SSHClient {
     _exec(cmd, callback) {
         v(`${this._location}:${this._cwd}$`, cmd);
         if (!this._ssh) throw Error('Can not .exec commands before SSH is connected!')
-    
+        if (this._dryMode) return callback()
+        
         if (this._cwd) cmd = `cd ${this._cwd} && ` + cmd
         
         this._ssh.exec(cmd, (err, stream) => {

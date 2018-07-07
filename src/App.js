@@ -16,6 +16,7 @@ class App {
         this._description = ''
         this._pools = []
         this._loopBy = null
+        this._dryMode = false
         
         this.chat = new HipChat(chatToken)
         
@@ -24,6 +25,7 @@ class App {
             .option('-i, --interactive', 'Turn ON the interactive mode')
             .option('-v, --verbose', 'Turn ON log details of whats happening')
             .option('-f, --force', 'Suppress confirm messages (used for automation)')
+            .option('-n, --dry-run', 'Dry run mode will do everything as usual except commands execution')
             .version(require('../package.json').version)
     
         process.on('uncaughtException', (err) => this._errorHandler(err))
@@ -53,7 +55,8 @@ class App {
         if (def && choices) {
             if (!choices.includes(def)) throw Error(`The default option(${def}) is not allowed as choices`)
         }
-        if(def) description += ` Default: ${def}`
+        if(choices) description += ` Available: ${choices}`
+        
 
         program.option(flags, description, (val) => {
             if (!choices || !Array.isArray(choices) || !choices.length) return val
@@ -84,6 +87,10 @@ class App {
         try {
             program.parse(process.argv)
             this.params = program.opts()
+            if(program.dryRun){
+                console.info('============== DRY RUN =============')
+                this._dryMode = true
+            }
     
             let iterations = []
             let parallel = false
@@ -138,6 +145,7 @@ class App {
     }
     
     async exec(cmd){
+        if (this._dryMode) return console.log(cmd)
         return Console.exec(cmd)
     }
     
@@ -156,7 +164,7 @@ class App {
      * @return {Promise<SSHClient>|null}
      */
     async ssh(host, user, cmd = ''){
-        let ssh = new SSHClient(this.verbose)
+        let ssh = new SSHClient(this._dryMode)
         await ssh.connect({
             host: host,
             username: user,
