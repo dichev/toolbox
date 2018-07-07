@@ -32,17 +32,27 @@ class SSHClient {
     
     /**
      * @param {string} cmd
+     * @param {boolean} [silent]
      */
-    async exec(cmd) {
-        return promisify(this._exec.bind(this))(cmd)
+    async exec(cmd, silent = false) {
+        return promisify(this._exec.bind(this))(cmd, silent)
     }
     
     
     /**
-     * @param dir
+     * @param {string} dir
      */
     async chdir(dir) {
-        this._cwd = await this.exec(`cd ${dir} && pwd`)
+        this._cwd = await this.exec(`cd ${dir} && pwd`, true)
+    }
+    
+    /**
+     * @param {string} path
+     * @return {boolean}
+     */
+    async exists(path) {
+        let exists = await this.exec(`[ -e ${path} ] && echo EXISTS || echo NOT_EXISTS`, true)
+        return exists === 'EXISTS'
     }
    
     
@@ -70,9 +80,10 @@ class SSHClient {
     
     /**
      * @param {string} cmd
+     * @param {boolean} [silent]
      * @param {function} callback
      */
-    _exec(cmd, callback) {
+    _exec(cmd, silent = false, callback) {
         v(`${this._location}:${this._cwd}$`, cmd);
         if (!this._ssh) throw Error('Can not .exec commands before SSH is connected!')
         if (this._dryMode) return callback()
@@ -81,16 +92,17 @@ class SSHClient {
         
         this._ssh.exec(cmd, (err, stream) => {
             if (err) return callback(err);
-            this._handleStream(stream, callback);
+            this._handleStream(stream, silent, callback);
         });
     }
     
     /**
      * @param {stream} process
+     * @param {boolean} [silent]
      * @param {function} callback
      * @private
      */
-    _handleStream(process, callback) {
+    _handleStream(process, silent = false, callback) {
         let _stdout = '';
         let _stderr = '';
         
@@ -103,13 +115,13 @@ class SSHClient {
         process.stdout.on('data', (data) => {
             let stdout = data.toString().trim();
             _stdout += stdout + '\n';
-            console.log(stdout);
+            silent ? v(stdout) : console.log(stdout);
         });
         
         process.stderr.on('data', (data) => {
             let stderr = data.toString().trim();
             _stderr += stderr + '\n';
-            console.warn(stderr);
+            silent ? v(stderr) : console.warn(stderr);
         });
     }
     

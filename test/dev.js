@@ -26,8 +26,13 @@ deployer
     .run(async (host) => {
         let ssh = await deployer.ssh(HOSTS.find(h => h.name === host).ip, 'root')
     
-        await ssh.chdir('/opt/dopamine/sys-metrics')
-        await ssh.exec('git describe --tags')
-        await ssh.exec('systemctl status sys-metrics | grep Active')
+        if (await ssh.exists('/opt/dopamine/sys-metrics')) {
+            await ssh.chdir('/opt/dopamine/sys-metrics')
+            await ssh.exec('git describe --tags')
+            await ssh.exec('systemctl status sys-metrics | grep Active')
+        }
+        else {
+            console.info('Oups, there are no sys-metrics here..')
+        }
     })
 
