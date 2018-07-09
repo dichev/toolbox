@@ -115,7 +115,7 @@ class App {
             
             
             // await this.chat.notify(`${host} | Running fo`)
-            await this.chat.notify('RUN: ' + (this._description || `Running ${this.actionName}`))
+            await this.chat.notify(`${this.actionName} | RUN: ` + (this._description || `Running ${this.actionName}`))
             
             if(!iterations.length){
                 await fn()
@@ -123,7 +123,7 @@ class App {
             else if(parallel){
                 console.info(`\n-- Running in parallel(${parallelLimit}): ${iterations} -----------------------------------------`)
                 let fnPromises = iterations.map(host => async () => {
-                    await this.chat.notify(`Executing on ${host}..`)
+                    await this.chat.notify(`${this.actionName} | Executing on ${host}..`)
                     return fn(host)
                 })
                 await Chain.parallelLimit(parallelLimit, fnPromises)
@@ -131,7 +131,7 @@ class App {
             else {
                 for (let host of iterations) {
                     console.info(`\n-- ${host} -----------------------------------------`)
-                    await this.chat.notify(`Executing on ${host}..`)
+                    await this.chat.notify(`${this.actionName} | Executing on ${host}..`)
                     await fn(host)
                 }
             }
@@ -140,7 +140,7 @@ class App {
             await this._errorHandler(err)
         }
         this.destroy()
-        await this.chat.notify(`Finished!`, {color: 'green'})
+        await this.chat.notify(`${this.actionName} | Finished!`, {color: 'green'})
         
         return this
     }
@@ -220,7 +220,7 @@ class App {
         console.verbose(err.stack)
         
         this.destroy()
-        this.chat.notify(`Aborting due error: <br/> ${err.message.replace(/\n/g, '<br/>')}`, {color: 'red'}).catch(console.error)
+        this.chat.notify(`${this.actionName} | Aborting due error: <br/> ${err.message.replace(/\n/g, '<br/>')}`, {color: 'red'}).catch(console.error)
         setTimeout(() => process.exit(1), 500)
     }
     
