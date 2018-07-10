@@ -216,11 +216,12 @@ class App {
      * @private
      */
     _errorHandler(err) {
-        console.error(err.message)
+        let msg = err.message || err.toString()
+        console.error(msg)
         console.verbose(err.stack)
         
         this.destroy()
-        this.chat.notify(`${this.actionName} | Aborting due error: <br/> ${err.message.replace(/\n/g, '<br/>')}`, {color: 'red'}).catch(console.error)
+        this.chat.notify(`${this.actionName} | Aborting due error: <br/> ${msg.replace(/\n/g, '<br/>')}`, {color: 'red'}).catch(console.error)
         setTimeout(() => process.exit(1), 500)
     }
     
