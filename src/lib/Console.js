@@ -17,8 +17,9 @@ class Console {
      * @return {Promise}
      */
     static async exec(cmd){
+        v(cmd)
         return new Promise((resolve, reject) => {
-            let bash = spawn('bash', ['-c', cmd], { stdio: [process.stdin, 'pipe', 'pipe']});
+            let bash = spawn('bash', ['-c', cmd]); // , { stdio: [process.stdin, 'pipe', 'pipe']} <- this totally breaks shell colors
     
             let output = ''
             if(bash.stdout) bash.stdout.on('data', data => {

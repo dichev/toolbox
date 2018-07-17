@@ -1,6 +1,7 @@
 'use strict'
 
 const Console = require('./lib/Console')
+const Shell = require('./lib/Shell')
 const Pattern = require('./lib/Pattern')
 const HipChat = require('./plugins/HipChat')
 const Chain = require('./lib/Chain')
@@ -192,10 +193,10 @@ class App {
     
    
     /**
-     * @return Console
+     * @return Shell
      */
-    async bash(){
-        return Console
+    async shell(){
+        return new Shell()
     }
     
     destroy(){
@@ -218,7 +219,7 @@ class App {
     _errorHandler(err) {
         let msg = err.message || err.toString()
         console.error(msg)
-        console.verbose(err.stack)
+        if(err.stack) console.verbose(err.stack)
         
         this.destroy()
         this.chat.notify(`${this.actionName} | Aborting due error: <br/> ${msg.replace(/\n/g, '<br/>')}`, {color: 'red'}).catch(console.error)
