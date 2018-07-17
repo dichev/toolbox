@@ -32,10 +32,12 @@ class SSHClient {
     
     /**
      * @param {string} cmd
-     * @param {boolean} [silent]
+     * @param {object} [options]
+     * @param {boolean} [options.silent]
+     * @param {boolean} [options.secret]
      */
-    async exec(cmd, silent = false) {
-        return promisify(this._exec.bind(this))(cmd, silent)
+    async exec(cmd, {silent = false, secret = false} = {}) {
+        return promisify(this._exec.bind(this))(cmd, {silent, secret})
     }
     
     
@@ -43,7 +45,7 @@ class SSHClient {
      * @param {string} dir
      */
     async chdir(dir) {
-        this._cwd = await this.exec(`cd ${dir} && pwd`, true)
+        this._cwd = await this.exec(`cd ${dir} && pwd`, { silent: true })
     }
     
     /**
@@ -51,8 +53,26 @@ class SSHClient {
      * @return {boolean}
      */
     async exists(path) {
-        let exists = await this.exec(`[ -e ${path} ] && echo EXISTS || echo NOT_EXISTS`, true)
+        let exists = await this.exec(`[ -e ${path} ] && echo EXISTS || echo NOT_EXISTS`, { silent: true })
         return exists === 'EXISTS'
+    }
+    
+    async tunnel(boundPort, remotePort) {
+        v(`Tunneling 127.0.0.1:${boundPort} to 127.0.0.1:${remotePort}`);
+        
+        return new Promise((resolve, reject) => {
+            this._ssh.forwardOut(
+                '127.0.0.1', boundPort,   // source IP / port
+                '127.0.0.1', remotePort,  // destination IP / port
+                (error, stream) => {
+                    if (error) {
+                        reject(error);
+                    } else {
+                        resolve(stream)
+                    }
+                }
+            )
+        })
     }
    
     
@@ -80,29 +100,32 @@ class SSHClient {
     
     /**
      * @param {string} cmd
-     * @param {boolean} [silent]
+     * @param {object} [options]
+     * @param {boolean} [options.silent]
+     * @param {boolean} [options.secret]
      * @param {function} callback
      */
-    _exec(cmd, silent = false, callback) {
-        v(`${this._location}:${this._cwd}$`, cmd);
+    _exec(cmd, options = {}, callback) {
+        if (!options.secret) v(`${this._location}:${this._cwd}$`, cmd);
         if (!this._ssh) throw Error('Can not .exec commands before SSH is connected!')
         if (this._dryMode) return callback()
         
         if (this._cwd) cmd = `cd ${this._cwd} && ` + cmd
-        
         this._ssh.exec(cmd, (err, stream) => {
             if (err) return callback(err);
-            this._handleStream(stream, silent, callback);
+            this._handleStream(stream, options, callback);
         });
     }
     
     /**
      * @param {stream} process
-     * @param {boolean} [silent]
+     * @param {object} [options]
+     * @param {boolean} [options.silent]
+     * @param {boolean} [options.secret]
      * @param {function} callback
      * @private
      */
-    _handleStream(process, silent = false, callback) {
+    _handleStream(process, { secret = false, silent = false}, callback) {
         let _stdout = '';
         let _stderr = '';
         
@@ -115,13 +138,13 @@ class SSHClient {
         process.stdout.on('data', (data) => {
             let stdout = data.toString().trim();
             _stdout += stdout + '\n';
-            silent ? v(stdout) : console.log(stdout);
+            if(!secret) silent ? v(stdout) : console.log(stdout);
         });
         
         process.stderr.on('data', (data) => {
             let stderr = data.toString().trim();
             _stderr += stderr + '\n';
-            silent ? v(stderr) : console.warn(stderr);
+            if(!secret) silent ? v(stderr) : console.warn(stderr);
         });
     }
     

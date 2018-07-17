@@ -2,6 +2,7 @@
 
 const Console = require('./lib/Console')
 const Shell = require('./lib/Shell')
+const MySQL = require('./lib/MySQL')
 const Pattern = require('./lib/Pattern')
 const HipChat = require('./plugins/HipChat')
 const Chain = require('./lib/Chain')
@@ -191,6 +192,20 @@ class App {
         }
     }
     
+    /**
+     * @param {object} cfg
+     * @return {MySQL}
+     */
+    async mysql(cfg = {}) {
+        let db = new MySQL()
+        let ssh = null
+        if(cfg.ssh) {
+            if(cfg.ssh instanceof SSHClient) ssh = cfg.ssh
+            else ssh = await this.ssh(cfg.ssh.host, cfg.ssh.user)
+        }
+        await db.connect(cfg, ssh)
+        return db
+    }
    
     /**
      * @return Shell
@@ -198,6 +213,7 @@ class App {
     async shell(){
         return new Shell()
     }
+
     
     destroy(){
         while (this._pools.length) {

@@ -16,7 +16,7 @@ class Shell {
      * @return {string}
      */
     async chdir(dir) {
-        this._cwd = await this.exec(`cd ${dir} && pwd`, true)
+        this._cwd = await this.exec(`cd ${dir} && pwd`, { silent: true })
         return this._cwd
     }
     
@@ -24,7 +24,7 @@ class Shell {
      * @param {string} cmd
      * @param {boolean} [silent]
      */
-    async exec(cmd, silent = false) {
+    async exec(cmd, { silent = false } = {}) {
         if (this._cwd) cmd = `cd ${this._cwd} && ` + cmd
         v(this._cwd)
         return Console.exec(cmd)
