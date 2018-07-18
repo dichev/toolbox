@@ -1,7 +1,7 @@
 'use strict'
 
 const Console = require('./Console')
-const console = require('./Log')
+const console = require('../lib/Log')
 const v = console.verbose
 
 class Shell {

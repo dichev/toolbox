@@ -2,7 +2,7 @@
 
 const SSHClient = require('./SSHClient');
 const mysql = require('mysql2/promise'); // TODO: too much deps
-const console = require('./Log')
+const console = require('../lib/Log')
 const v = console.verbose
 
 class MySQL {

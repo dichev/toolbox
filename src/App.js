@@ -1,12 +1,12 @@
 'use strict'
 
-const Console = require('./lib/Console')
-const Shell = require('./lib/Shell')
-const MySQL = require('./lib/MySQL')
+const Console = require('./clients/Console')
+const Shell = require('./clients/Shell')
+const MySQL = require('./clients/MySQL')
 const Pattern = require('./lib/Pattern')
 const HipChat = require('./plugins/HipChat')
 const Chain = require('./lib/Chain')
-const SSHClient = require('./lib/SSHClient')
+const SSHClient = require('./clients/SSHClient')
 const program = require('commander')
 const console = require('./lib/Log')
 const isWin = require('os').platform() === 'win32'

@@ -2,7 +2,7 @@
 
 const promisify = require('util').promisify;
 const SSH2 = require('ssh2'); // TODO: check security
-const console = require('./Log')
+const console = require('../lib/Log')
 const v = console.verbose
 
 class SSHClient {
