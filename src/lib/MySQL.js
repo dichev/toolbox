@@ -2,6 +2,8 @@
 
 const SSHClient = require('./SSHClient');
 const mysql = require('mysql2/promise'); // TODO: too much deps
+const console = require('./Log')
+const v = console.verbose
 
 class MySQL {
     
@@ -33,7 +35,7 @@ class MySQL {
     
         if (ssh) {
             if(!password) {
-                let storedPass = await ssh.exec(`(cat .my.cnf | grep password) || echo ''`, { secret: true })
+                let storedPass = await ssh.exec(`(cat .my.cnf | grep password) || echo ''`, { secret: true, allowInDryMode: true }) || ''
                 cfg.password = storedPass.replace(/password(\s?)+=/, '').trim() || ''
             }
             
@@ -49,6 +51,9 @@ class MySQL {
     
     // TODO: implement --show-warnings
     async query(SQL, params){
+        v(`${this._dryMode?'DRY RUN | ':''}[mysql] ${SQL.length > 200 ? SQL.substr(0, 200) + '..' : SQL} [${params||''}]`)
+        if(this._dryMode) return []
+        
         let [rows, fields] = await this._db.query(SQL, params)
         return rows
     }

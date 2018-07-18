@@ -22,12 +22,15 @@ class Shell {
     
     /**
      * @param {string} cmd
-     * @param {boolean} [silent]
+     * @param {object} [options]
+     * @param {boolean} [options.silent]
+     * @param {boolean} [options.secret]
+     * @param {boolean} [options.allowInDryMode]
      */
-    async exec(cmd, { silent = false } = {}) {
+    async exec(cmd, {silent = false, secret = false, allowInDryMode = false} = {}) {
         if (this._cwd) cmd = `cd ${this._cwd} && ` + cmd
         v(this._cwd)
-        return Console.exec(cmd)
+        return Console.exec(cmd, { silent })
     }
     
     async execDryMode(cmd) {

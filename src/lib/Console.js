@@ -14,9 +14,12 @@ class Console {
     
     /**
      * @param {string} cmd
-     * @return {Promise}
+     * @param {object} [options]
+     * @param {boolean} [options.silent]
+     * @param {boolean} [options.secret]
+     * @param {boolean} [options.allowInDryMode]
      */
-    static async exec(cmd){
+    static async exec(cmd, {silent = false, secret = false, allowInDryMode = false} = {}) {
         v(cmd)
         return new Promise((resolve, reject) => {
             let bash = spawn('bash', ['-c', cmd]); // , { stdio: [process.stdin, 'pipe', 'pipe']} <- this totally breaks shell colors
@@ -24,11 +27,11 @@ class Console {
             let output = ''
             if(bash.stdout) bash.stdout.on('data', data => {
                 output += data.toString()
-                console.log(data.toString().trim())
+                if(!silent) console.log(data.toString().trim())
             })
             if(bash.stderr) bash.stderr.on('data', data => {
                 output += data.toString()
-                console.warn(data.toString().trim())
+                if(!silent) console.warn(data.toString().trim())
             })
             bash.on('error', (err) => console.error(err));
             bash.on('close', (code) => {

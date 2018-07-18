@@ -197,7 +197,7 @@ class App {
      * @return {MySQL}
      */
     async mysql(cfg = {}) {
-        let db = new MySQL()
+        let db = new MySQL(this._dryMode)
         let ssh = null
         if(cfg.ssh) {
             if(cfg.ssh instanceof SSHClient) ssh = cfg.ssh

@@ -35,9 +35,10 @@ class SSHClient {
      * @param {object} [options]
      * @param {boolean} [options.silent]
      * @param {boolean} [options.secret]
+     * @param {boolean} [options.allowInDryMode]
      */
-    async exec(cmd, {silent = false, secret = false} = {}) {
-        return promisify(this._exec.bind(this))(cmd, {silent, secret})
+    async exec(cmd, {silent = false, secret = false, allowInDryMode = false} = {}) {
+        return promisify(this._exec.bind(this))(cmd, {silent, secret, allowInDryMode})
     }
     
     
@@ -45,7 +46,7 @@ class SSHClient {
      * @param {string} dir
      */
     async chdir(dir) {
-        this._cwd = await this.exec(`cd ${dir} && pwd`, { silent: true })
+        this._cwd = await this.exec(`cd ${dir} && pwd`, { silent: true, allowInDryMode: true })
     }
     
     /**
@@ -53,7 +54,7 @@ class SSHClient {
      * @return {boolean}
      */
     async exists(path) {
-        let exists = await this.exec(`[ -e ${path} ] && echo EXISTS || echo NOT_EXISTS`, { silent: true })
+        let exists = await this.exec(`[ -e ${path} ] && echo EXISTS || echo NOT_EXISTS`, { silent: true, allowInDryMode: true })
         return exists === 'EXISTS'
     }
     
@@ -103,12 +104,14 @@ class SSHClient {
      * @param {object} [options]
      * @param {boolean} [options.silent]
      * @param {boolean} [options.secret]
+     * @param {boolean} [options.allowInDryMode]
      * @param {function} callback
      */
     _exec(cmd, options = {}, callback) {
-        if (!options.secret) v(`${this._location}:${this._cwd}$`, cmd);
+        let isDryMode = this._dryMode && !options.allowInDryMode
+        if (!options.secret) v(`${isDryMode?'DRY RUN | ':''}${this._location}:${this._cwd}$`, cmd);
         if (!this._ssh) throw Error('Can not .exec commands before SSH is connected!')
-        if (this._dryMode) return callback()
+        if (isDryMode) return callback()
         
         if (this._cwd) cmd = `cd ${this._cwd} && ` + cmd
         this._ssh.exec(cmd, (err, stream) => {
