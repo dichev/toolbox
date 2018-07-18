@@ -1,59 +1,13 @@
 'use strict'
 
 const readline = require('readline')
-const spawn = require('child_process').spawn
 const console = require('../lib/Log')
 const v = console.verbose
 
-class Console {
+class Input {
     
     static info(msg){
         console.info(msg)
-    }
-    
-    
-    /**
-     * @param {string} cmd
-     * @param {object} [options]
-     * @param {boolean} [options.silent]
-     * @param {boolean} [options.secret]
-     * @param {boolean} [options.allowInDryMode]
-     */
-    static async exec(cmd, {silent = false, secret = false, allowInDryMode = false} = {}) {
-        v(cmd)
-        return new Promise((resolve, reject) => {
-            let bash = spawn('bash', ['-c', cmd]); // , { stdio: [process.stdin, 'pipe', 'pipe']} <- this totally breaks shell colors
-    
-            let output = ''
-            if(bash.stdout) bash.stdout.on('data', data => {
-                output += data.toString()
-                if(!silent) console.log(data.toString().trim())
-            })
-            if(bash.stderr) bash.stderr.on('data', data => {
-                output += data.toString()
-                if(!silent) console.warn(data.toString().trim())
-            })
-            bash.on('error', (err) => console.error(err));
-            bash.on('close', (code) => {
-                if(code === 0){
-                    resolve(output.trim())
-                } else {
-                    reject('Error code: ' + code)
-                }
-                
-            });
-            // bash.stdin.write(cmd + '\n')
-            // bash.stdin.end()
-        })
-    }
-    
-    /**
-     * @param {string} cmd
-     * @return {Promise}
-     */
-    static async execDryMode(cmd) {
-        console.log('$ ', cmd)
-        return new Promise((resolve, reject) => setTimeout(resolve, 1000)).then(() => 'dry-mode')
     }
     
     static async confirm(question, def = 'yes', expect = ['yes', 'y']) {
@@ -101,7 +55,7 @@ class Console {
                     answer = def || ''
                 }
                 if(choices && !choices.includes(answer)){
-                    resolve(Console.ask(question, choices, def))
+                    resolve(Input.ask(question, choices, def))
                 } else {
                     resolve(answer)
                 }
@@ -117,4 +71,4 @@ class Console {
     
 }
 
-module.exports = Console
+module.exports = Input

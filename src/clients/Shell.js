@@ -1,8 +1,8 @@
 'use strict'
 
-const Console = require('./Console')
 const console = require('../lib/Log')
 const v = console.verbose
+const spawn = require('child_process').spawn
 
 class Shell {
     
@@ -30,19 +30,34 @@ class Shell {
     async exec(cmd, {silent = false, secret = false, allowInDryMode = false} = {}) {
         if (this._cwd) cmd = `cd ${this._cwd} && ` + cmd
         v(this._cwd)
-        return Console.exec(cmd, { silent })
-    }
+        
+        // TODO: dry mode
+        // return new Promise((resolve, reject) => setTimeout(resolve, 1000)).then(() => 'dry-mode')
+        
+        return new Promise((resolve, reject) => {
+            let bash = spawn('bash', ['-c', cmd]); // , { stdio: [process.stdin, 'pipe', 'pipe']} <- this totally breaks shell colors
     
-    async execDryMode(cmd) {
-        return Console.execDryMode(cmd)
-    }
-    
-    async confirm(question, def = 'yes', expect = ['yes', 'y']) {
-        return Console.confirm(question, def, expect)
-    }
-    
-    async ask(question, choices, def){
-        return Console.ask(question, choices, def)
+            let output = ''
+            if(bash.stdout) bash.stdout.on('data', data => {
+                output += data.toString()
+                if(!silent) console.log(data.toString().trim())
+            })
+            if(bash.stderr) bash.stderr.on('data', data => {
+                output += data.toString()
+                if(!silent) console.warn(data.toString().trim())
+            })
+            bash.on('error', (err) => console.error(err));
+            bash.on('close', (code) => {
+                if(code === 0){
+                    resolve(output.trim())
+                } else {
+                    reject('Error code: ' + code)
+                }
+                
+            });
+            // bash.stdin.write(cmd + '\n')
+            // bash.stdin.end()
+        })
     }
     
     

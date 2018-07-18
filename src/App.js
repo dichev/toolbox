@@ -1,20 +1,19 @@
 'use strict'
 
-const Console = require('./clients/Console')
+const Input = require('./clients/Input')
 const Shell = require('./clients/Shell')
 const MySQL = require('./clients/MySQL')
-const Pattern = require('./lib/Pattern')
-const HipChat = require('./plugins/HipChat')
-const Chain = require('./lib/Chain')
 const SSHClient = require('./clients/SSHClient')
-const program = require('commander')
 const console = require('./lib/Log')
+const Pattern = require('./lib/Pattern')
+const Chain = require('./lib/Chain')
+const HipChat = require('./plugins/HipChat')
+const program = require('commander')
 const isWin = require('os').platform() === 'win32'
 
 class App {
     
     constructor({chatToken = null } = {}) {
-        this.verbose = false
         this.params = {}
         this._description = ''
         this._pools = []
@@ -147,17 +146,12 @@ class App {
         return this
     }
     
-    async exec(cmd){
-        if (this._dryMode) return console.log(cmd)
-        return Console.exec(cmd)
-    }
-    
     async confirm(question, def = 'yes', expect = ['yes', 'y']) {
-        return Console.confirm(question, def, expect)
+        return Input.confirm(question, def, expect)
     }
     
     async ask(question, choices, def){
-        return Console.ask(question, choices, def)
+        return Input.ask(question, choices, def)
     }
     
     /**
