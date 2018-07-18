@@ -24,6 +24,9 @@ deployer
     .loop('hosts')
 
     .run(async (host) => {
+        
+        await deployer.shell().exec('date')
+        
         let ssh = await deployer.ssh(HOSTS.find(h => h.name === host).ip, 'root')
     
         if (await ssh.exists('/opt/dopamine/sys-metrics')) {

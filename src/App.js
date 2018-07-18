@@ -204,7 +204,7 @@ class App {
     /**
      * @return Shell
      */
-    async shell(){
+    shell(){
         return new Shell()
     }
 
