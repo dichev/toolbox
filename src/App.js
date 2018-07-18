@@ -1,9 +1,9 @@
 'use strict'
 
-const Input = require('./clients/Input')
-const Shell = require('./clients/Shell')
-const MySQL = require('./clients/MySQL')
-const SSHClient = require('./clients/SSHClient')
+const Input = require('./tools/Input')
+const Shell = require('./tools/Shell')
+const MySQL = require('./tools/MySQL')
+const SSHClient = require('./tools/SSHClient')
 const console = require('./lib/Log')
 const Pattern = require('./lib/Pattern')
 const Chain = require('./lib/Chain')
