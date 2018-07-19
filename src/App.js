@@ -2,6 +2,7 @@
 
 const Input = require('./tools/Input')
 const Shell = require('./tools/Shell')
+const Tester = require('./tools/Tester')
 const MySQL = require('./tools/MySQL')
 const SSHClient = require('./tools/SSHClient')
 const console = require('./lib/Log')
@@ -206,6 +207,13 @@ class App {
      */
     shell(){
         return new Shell()
+    }
+   
+    /**
+     * @return Tester
+     */
+    get tester(){
+        return Tester
     }
 
     

@@ -11,8 +11,16 @@ class SSHClient {
         this._ssh = null
         this._cwd = ''
         this._dryMode = dryMode
+        this._silent = false
         
         this._location = ''
+    }
+    
+    get silent() {
+        return this._silent
+    }
+    set silent(v) {
+        this._silent = v
     }
     
     
@@ -141,13 +149,13 @@ class SSHClient {
         process.stdout.on('data', (data) => {
             let stdout = data.toString().trim();
             _stdout += stdout + '\n';
-            if(!secret) silent ? v(stdout) : console.log(stdout);
+            if(!secret && !this._silent) silent ? v(stdout) : console.log(stdout);
         });
         
         process.stderr.on('data', (data) => {
             let stderr = data.toString().trim();
             _stderr += stderr + '\n';
-            if(!secret) silent ? v(stderr) : console.warn(stderr);
+            if(!secret && !this._silent) silent ? v(stderr) : console.warn(stderr);
         });
     }
     
