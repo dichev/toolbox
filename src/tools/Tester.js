@@ -11,11 +11,9 @@ let testCases = []
  */
 class Tester {
     
-    constructor() {
-    }
     
     static async run(errorOnFail = true){
-        console.log(`\n# Running test suit of ${testCases.length} tests:`)
+        console.log(`\n# Running the test suit:`)
     
         let pass = 0
         let fail = 0
