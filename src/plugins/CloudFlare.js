@@ -11,6 +11,8 @@ class CloudFlare {
         this._zone = zone
         this._email = email
         this._key = key
+        
+        this.silent = false
     }
     
     // aliases
@@ -39,7 +41,8 @@ class CloudFlare {
         try {
             const response = await fetch(options.url, options)
             result = await response.json()
-            console.log(JSON.stringify(result, null, 4))
+            let raw = JSON.stringify(result, null, 4)
+            this.silent ? console.verbose(raw) : console.log(raw)
         }
         catch (err) {
             result = err.error ? err.error : { success: false, msg: err.toString() }

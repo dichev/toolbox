@@ -20,7 +20,7 @@ class SSHClient {
         return this._silent
     }
     set silent(v) {
-        this._silent = v
+        this._silent = Boolean(v)
     }
     
     
@@ -149,13 +149,13 @@ class SSHClient {
         process.stdout.on('data', (data) => {
             let stdout = data.toString().trim();
             _stdout += stdout + '\n';
-            if(!secret && !this._silent) silent ? v(stdout) : console.log(stdout);
+            if(!secret) (this._silent || silent) ? v(stdout) : console.log(stdout);
         });
         
         process.stderr.on('data', (data) => {
             let stderr = data.toString().trim();
             _stderr += stderr + '\n';
-            if(!secret && !this._silent) silent ? v(stderr) : console.warn(stderr);
+            if(!secret) (this._silent || silent) ? v(stderr) : console.warn(stderr);
         });
     }
     
