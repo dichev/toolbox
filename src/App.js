@@ -10,7 +10,8 @@ const Pattern = require('./lib/Pattern')
 const Chain = require('./lib/Chain')
 const HipChat = require('./plugins/HipChat')
 const program = require('commander')
-const isWin = require('os').platform() === 'win32'
+const os = require('os')
+const isWin = os.platform() === 'win32'
 
 class App {
     
@@ -117,7 +118,7 @@ class App {
             
             
             // await this.chat.notify(`${host} | Running fo`)
-            await this.chat.notify(`${this.actionName} | RUN: ` + (this._description || `Running ${this.actionName}`))
+            await this.chat.notify(`${this.actionName} | RUN: ${this._description} (by ${os.userInfo().username})`)
             
             if(!iterations.length){
                 await fn()

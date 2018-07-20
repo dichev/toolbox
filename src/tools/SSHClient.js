@@ -103,7 +103,10 @@ class SSHClient {
                 v(`[ssh] SSH connection closed: ${this._location}`);
                 this._ssh = null;
             })
-            .on('error', callback)
+            .on('error', (err) => {
+                v(`[ssh] Error ${this._location}`);
+                callback(err)
+            })
             .connect(cfg);
     }
     
