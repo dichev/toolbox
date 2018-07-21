@@ -4,7 +4,7 @@ const colors = require('colors/safe') // check 'chalk' package
 let verbose = (process.argv.findIndex(arg => arg === '-v' || arg === '--verbose') !== -1)
 
 
-let report = {pass: 0, fail: 0}
+let report = {pass: 0, fail: 0, warn: 0}
 
 
 /**
@@ -24,6 +24,7 @@ class Tester {
         this.it = this.add.bind(this)
         this.it.skip = this.skip.bind(this)
         this.it.info = this.info.bind(this)
+        this.it.warn = this.warn.bind(this)
     }
     
     async run(errorOnFail = true){
@@ -33,6 +34,7 @@ class Tester {
     
         let pass = 0
         let fail = 0
+        let warn = 0
         
         while(this.testCases.length){
             let {title, fn, type} = this.testCases.shift()
@@ -52,29 +54,36 @@ class Tester {
                 }
                 pass++
             } catch (err) {
-                console.error(colors.red(`  [x] ${title}`))
+                if(type === 'warn'){
+                    console.warn(colors.yellow(`  [!] ${title}`))
+                    warn++
+                } else {
+                    console.error(colors.red(`  [x] ${title}`))
+                    fail++
+                }
                 console.log(colors.gray('      ' + err.message || err.toString()))
                 if(verbose && err.stack) console.log('      ' + colors.gray(err.stack.replace(/\r?\n/g, '\n      ') + '\r\n'))
-                fail++
             }
         }
     
         report.pass += pass
         report.fail += fail
+        report.warn += warn
         if(errorOnFail) this.status()
     
         if (!this.silent) console.log(`----------------------------------------------\n\n`)
         this.isRunning = false
-        return { fail, pass }
+        return { fail, pass, warn }
     }
     
     /**
      * @return {{fail: number, pass: number}}
      */
     status(errorOnFail = true){
-        let {pass, fail} = report
+        let {pass, fail, warn} = report
         
         if (pass) console.log(colors.green(`Passed ${pass} test cases`))
+        if (warn) console.log(colors.yellow(`Warning on ${warn} test cases`))
         if (fail) {
             if (errorOnFail) throw Error(`Failed ${fail} test cases`)
             console.log(colors.red(`Failed ${fail} test cases`))
@@ -95,6 +104,10 @@ class Tester {
     
     info(title, fn) {
         return this.add(title, fn, 'info')
+    }
+    
+    warn(title, fn) {
+        return this.add(title, fn, 'warn')
     }
     
 }
