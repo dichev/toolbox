@@ -218,8 +218,8 @@ class App {
     /**
      * @return Tester
      */
-    get tester(){
-        return Tester
+    tester(){
+        return new Tester()
     }
 
     

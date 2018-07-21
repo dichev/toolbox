@@ -4,22 +4,37 @@ const colors = require('colors/safe') // check 'chalk' package
 let verbose = (process.argv.findIndex(arg => arg === '-v' || arg === '--verbose') !== -1)
 
 
-let testCases = []
+let report = {pass: 0, fail: 0}
+
 
 /**
  * Super simple test framework without 1 million dependencies
  */
 class Tester {
     
+    constructor(){
+        this.testCases = []
+        
+        this.isRunning = false
+        this.prefix = ''
+        this._skipped = false
+        
+        // TODO: fix code completion
+        this.it = this.add.bind(this)
+        this.it.skip = this.skip.bind(this)
+        this.it.info = this.info.bind(this)
+    }
     
-    static async run(errorOnFail = true){
+    async run(errorOnFail = true){
+        if(this.isRunning) return // could happen in parallel execution
+        this.isRunning = true
         console.log(`\n\n--- Running the test suit ---------------`)
     
         let pass = 0
         let fail = 0
         
-        while(testCases.length){
-            let {title, fn, type} = testCases.shift()
+        while(this.testCases.length){
+            let {title, fn, type} = this.testCases.shift()
             try {
                 if(type === 'info'){
                     console.info(`  [i] ${title}`)
@@ -27,9 +42,9 @@ class Tester {
                 }
                 else {
                     await fn()
-                    if(Tester.skipped) {
+                    if(this._skipped) {
                         console.info(colors.gray(`  [-] ${title}`))
-                        Tester.skipped = false
+                        this._skipped = false
                     } else {
                         console.info(colors.green(`  [√] ${title}`))
                     }
@@ -43,37 +58,47 @@ class Tester {
             }
         }
     
-        if(pass) console.log(colors.green(`Passed ${pass} test cases`))
-        if(fail) {
-            if(errorOnFail) throw Error(`Failed ${fail} test cases`)
-            console.log(colors.red(`Failed ${fail} test cases`))
-            console.log(colors.gray('\nRun --verbose mode to see the errors stack'))
-        }
+        report.pass += pass
+        report.fail += fail
+        if(errorOnFail) this.status()
+       
         console.log(`----------------------------------------------\n\n`)
+        this.isRunning = false
+        return { fail, pass }
     }
     
-    static add(title, fn, type){
-        testCases.push({title, fn, type})
+    /**
+     * @return {{fail: number, pass: number}}
+     */
+    status(errorOnFail = true){
+        let {pass, fail} = report
+        
+        if (pass) console.log(colors.green(`Passed ${pass} test cases`))
+        if (fail) {
+            if (errorOnFail) throw Error(`Failed ${fail} test cases`)
+            console.log(colors.red(`Failed ${fail} test cases`))
+            console.log(colors.gray('Run --verbose mode to see the errors stack'))
+        }
+        return report
     }
     
-    static it(title, fn, type = 'test'){
-        return Tester.add(title, fn, type)
+    
+    add(title, fn, type = 'test'){
+        title = this.prefix + title
+        this.testCases.push({title, fn, type})
     }
     
-    static skip(reason = ''){
-        Tester.skipped = true
+    skip(reason = ''){
+        this._skipped = true
     }
     
-    static info(title, fn) {
-        return Tester.add(title, fn, 'info')
+    info(title, fn) {
+        return this.add(title, fn, 'info')
     }
     
 }
 
-// TODO: fix code completion
-Tester.it = Tester.add
-Tester.it.skip = Tester.skip
-Tester.it.info = Tester.info
+
 
 
 module.exports = Tester
