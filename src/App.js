@@ -220,7 +220,8 @@ class App {
      * @return {Tester}
      */
     tester(prefix = ''){
-        return new Tester(this.params.parallel ? prefix : '')
+        let parallel = this.params.parallel
+        return new Tester(parallel ? prefix : '', !!parallel)
     }
 
     

@@ -12,12 +12,13 @@ let report = {pass: 0, fail: 0}
  */
 class Tester {
     
-    constructor(prefix = ''){
+    constructor(prefix = '', silent = fase){
         this.testCases = []
         
         this.isRunning = false
         this.prefix = prefix ? `[${prefix}] ` : ''
         this._skipped = false
+        this.silent = silent
         
         // TODO: fix code completion
         this.it = this.add.bind(this)
@@ -28,7 +29,7 @@ class Tester {
     async run(errorOnFail = true){
         if(this.isRunning) return // could happen in parallel execution
         this.isRunning = true
-        console.log(`\n\n--- Running the test suit ---------------`)
+        if(!this.silent) console.log(`\n\n--- Running the test suit ---------------`)
     
         let pass = 0
         let fail = 0
@@ -61,8 +62,8 @@ class Tester {
         report.pass += pass
         report.fail += fail
         if(errorOnFail) this.status()
-       
-        console.log(`----------------------------------------------\n\n`)
+    
+        if (!this.silent) console.log(`----------------------------------------------\n\n`)
         this.isRunning = false
         return { fail, pass }
     }
