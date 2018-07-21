@@ -12,7 +12,7 @@ let report = {pass: 0, fail: 0, warn: 0}
  */
 class Tester {
     
-    constructor(prefix = '', silent = fase){
+    constructor(prefix = '', silent = false){
         this.testCases = []
         
         this.isRunning = false
@@ -22,6 +22,7 @@ class Tester {
         
         // TODO: fix code completion
         this.it = this.add.bind(this)
+        this.it.add = this.add.bind(this)
         this.it.skip = this.skip.bind(this)
         this.it.info = this.info.bind(this)
         this.it.warn = this.warn.bind(this)
