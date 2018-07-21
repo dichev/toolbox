@@ -214,12 +214,13 @@ class App {
     shell(){
         return new Shell()
     }
-   
+    
     /**
-     * @return Tester
+     * @param {string} [prefix] - used when run in parallel mode
+     * @return {Tester}
      */
-    tester(){
-        return new Tester()
+    tester(prefix = ''){
+        return new Tester(this.params.parallel ? prefix : '')
     }
 
     

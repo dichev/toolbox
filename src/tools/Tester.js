@@ -12,11 +12,11 @@ let report = {pass: 0, fail: 0}
  */
 class Tester {
     
-    constructor(){
+    constructor(prefix = ''){
         this.testCases = []
         
         this.isRunning = false
-        this.prefix = ''
+        this.prefix = prefix ? `[${prefix}] ` : ''
         this._skipped = false
         
         // TODO: fix code completion
