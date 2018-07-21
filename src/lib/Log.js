@@ -17,7 +17,7 @@ class Log {
         console.log.apply(console, args)
     }
     static info(...args){
-        console.info.apply(console, args.map(a => colors.green(a)))
+        console.info.apply(console, args.map(a => colors.white(a)))
     }
     static warn(...args){
         console.warn.apply(console, args.map(a => colors.yellow(a)))

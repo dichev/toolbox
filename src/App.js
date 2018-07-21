@@ -26,10 +26,11 @@ class App {
         
         program
             .option('-p, --parallel [limit]', 'When run with multiple hosts define how many commands to be executed in parallel. Set to 0 execute them all together. By default will be executed sequentially')
-            .option('-i, --interactive', 'Turn ON the interactive mode')
+            // .option('-i, --interactive', 'Turn ON the interactive mode')
             .option('-v, --verbose', 'Turn ON log details of whats happening')
             .option('-f, --force', 'Suppress confirm messages (used for automation)')
             .option('-n, --dry-run', 'Dry run mode will do everything as usual except commands execution')
+            .option('-q, --quiet', 'Turn off chat and some logs in stdout')
             .version(require('../package.json').version)
     
         process.on('uncaughtException', (err) => this._errorHandler(err))
@@ -88,6 +89,8 @@ class App {
      * @return {App}
      */
     async run(fn) {
+        let quiet = false
+        
         try {
             program.parse(process.argv)
             this.params = program.opts()
@@ -95,6 +98,8 @@ class App {
                 console.info('============== DRY RUN =============')
                 this._dryMode = true
             }
+            
+            quiet = this.params.quiet || false
     
             let iterations = []
             let parallel = false
@@ -118,23 +123,23 @@ class App {
             
             
             // await this.chat.notify(`${host} | Running fo`)
-            await this.chat.notify(`${this.actionName} | RUN: ${this._description} (by ${os.userInfo().username})`)
+            if(!quiet) await this.chat.notify(`${this.actionName} | RUN: ${this._description} (by ${os.userInfo().username})`)
             
             if(!iterations.length){
                 await fn()
             }
             else if(parallel){
-                console.info(`\n-- Running in parallel(${parallelLimit}): ${iterations} -----------------------------------------`)
+                if (!quiet) console.info(`\n-- Running in parallel(${parallelLimit}): ${iterations} -----------------------------------------`)
                 let fnPromises = iterations.map(host => async () => {
-                    await this.chat.notify(`${this.actionName} | Executing on ${host}..`)
+                    if (!quiet) await this.chat.notify(`${this.actionName} | Executing on ${host}..`)
                     return fn(host)
                 })
                 await Chain.parallelLimit(parallelLimit, fnPromises)
             }
             else {
                 for (let host of iterations) {
-                    console.info(`\n-- ${host} -----------------------------------------`)
-                    await this.chat.notify(`${this.actionName} | Executing on ${host}..`)
+                    if (!quiet && iterations.length > 1) console.info(`\n-- ${host} -----------------------------------------`)
+                    if (!quiet) await this.chat.notify(`${this.actionName} | Executing on ${host}..`)
                     await fn(host)
                 }
             }
@@ -143,7 +148,7 @@ class App {
             await this._errorHandler(err)
         }
         this.destroy()
-        await this.chat.notify(`${this.actionName} | Finished!`, {color: 'green'})
+        if (!quiet) await this.chat.notify(`${this.actionName} | Finished!`, {color: 'green'})
         
         return this
     }

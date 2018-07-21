@@ -2,7 +2,7 @@
 
 const fetch = require('node-fetch')
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
-
+const console = require('../lib/Log')
 
 class HipChat {
     
@@ -23,6 +23,7 @@ class HipChat {
      * @param {int}     [ms] - how many sec to wait until resolve the promise
      */
     async notify(message = 'NO MESSAGE', {color = 'gray', notify = true, message_format = 'html'} = {}, ms = 500) {
+        console.info(message)
         if(!this._urlToken) return
         // Do not wait response to avoid execution blocking by the HipChat http request
         this.notifyWait(message, { color, notify, message_format }).then().catch(err => console)
@@ -31,7 +32,6 @@ class HipChat {
     
     async notifyWait(message = 'NO MESSAGE', {color = 'gray', notify = true, message_format = 'html'} = {}) {
         if (!this._urlToken) return
-        // console.info(`# HipChat notification..`)
         
         let options = {
             method: 'POST',
