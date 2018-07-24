@@ -1,5 +1,6 @@
 'use strict'
 
+const Input = require('./Input')
 const SSHClient = require('./SSHClient');
 const mysql = require('mysql2/promise'); // TODO: too much deps
 const console = require('../lib/Log')
@@ -53,9 +54,26 @@ class MySQL {
     async query(SQL, params){
         v(`${this._dryMode?'DRY RUN | ':''}[mysql] ${SQL.length > 200 ? SQL.substr(0, 200) + '..' : SQL} [${params||''}]`)
         if(this._dryMode) return []
-        
+        await this._protect(SQL)
         let [rows, fields] = await this._db.query(SQL, params)
         return rows
+    }
+    
+    /**
+     * Once upon a time a query with DROP DATABASE was executed on production..
+     * so for now on we should be a lot more careful
+     */
+    async _protect(SQL){
+        if(/(DROP +DATABASE|DROP +USER|TRUNCATE +)/gmi.test(SQL)){
+            console.warn('WARNING! Found risky SQL statement:')
+            console.info(SQL)
+            console.warn('Checked against: /(DROP +DATABASE|DROP +USER|TRUNCATE +)/gmi')
+            console.warn('Are you sure you know what are you doing?')
+            let answer = await Input.ask(`Please type 'approved' to proceed`, ['approved', 'no'], 'no')
+            if(answer !== 'approved'){
+                throw Error('The operation is not approved. Aborting..')
+            }
+        }
     }
     
 }
