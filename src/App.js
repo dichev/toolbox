@@ -231,6 +231,13 @@ class App {
         }
     }
     
+    
+    sleep(sec = 1, msg = '') {
+        if (msg) console.info(msg, `(${sec}sec)`)
+        return new Promise((resolve) => setTimeout(resolve, sec * 1000))
+    }
+    
+    
     get actionName() { // TODO: this is temporary until migration to deployer cli
         let parts = process.argv[1].replace(/\\/g, '/').split('/')
         let action = parts.pop().replace('.js', '')
