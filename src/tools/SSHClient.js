@@ -215,7 +215,7 @@ class SSHClient {
                 dir = path.normalize(dir).replace(/\\/g, '/') // protect from /path/../
                 // console.log({dir})
     
-                let exactMatchBanned = [
+                let mustNotBeExactly = [
                     '/home/dopamine/',
                     '/home/dopamine/*',
                     '/home/dopamine/production',
@@ -228,7 +228,7 @@ class SSHClient {
                     '/opt/dopamine/',
                 ]
     
-                if (exactMatchBanned.includes(dir) || !mustStartWith.find(base => dir.startsWith(base))) {
+                if (mustNotBeExactly.includes(dir) || !mustStartWith.find(base => dir.startsWith(base))) {
                     safe = false
                 }
             }
