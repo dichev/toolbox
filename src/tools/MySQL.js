@@ -53,8 +53,8 @@ class MySQL {
     // TODO: implement --show-warnings
     async query(SQL, params){
         v(`${this._dryMode?'DRY RUN | ':''}[mysql] ${SQL.length > 200 ? SQL.substr(0, 200) + '..' : SQL} [${params||''}]`)
-        if(this._dryMode) return []
         await this._protect(SQL)
+        if(this._dryMode) return []
         let [rows, fields] = await this._db.query(SQL, params)
         return rows
     }
@@ -64,17 +64,29 @@ class MySQL {
      * so for now on we should be a lot more careful
      */
     async _protect(SQL){
-        if(/(DROP +DATABASE|DROP +USER|TRUNCATE +)/gmi.test(SQL)){
+        if(!this.isSafe(SQL)){
             console.warn('WARNING! Found risky SQL statement:')
             console.info(SQL)
-            console.warn('Checked against: /(DROP +DATABASE|DROP +USER|TRUNCATE +)/gmi')
             console.warn('Are you sure you know what are you doing?')
-            let answer = await Input.ask(`Please type 'approved' to proceed`, ['approved', 'no'], 'no')
-            if(answer !== 'approved'){
-                throw Error('The operation is not approved. Aborting..')
+            
+            if(prompt){
+                let answer = await Input.ask(`Please type 'approved' to proceed`, ['approved', 'no'], 'no')
+                if(answer !== 'approved'){
+                    throw Error('The operation is not approved. Aborting..')
+                }
             }
         }
     }
+    
+    /**
+     * United tested method
+     * @param {string} SQL
+     * @return {boolean}
+     */
+    isSafe(SQL) {
+        return /(DROP\s+DATABASE|DROP\s+USER|TRUNCATE\s+)/gmi.test(SQL) !== true
+    }
+    
     
 }
 
