@@ -220,11 +220,15 @@ class SSHClient {
                     '/home/dopamine/*',
                     '/home/dopamine/production',
                     '/home/dopamine/production/*',
-                    '/opt2/dopamine/',
-                    '/opt2/dopamine/*',
+                    '/opt/dopamine/',
+                    '/opt/dopamine/*',
+                ]
+                let mustStartWith = [
+                    '/home/dopamine/',
+                    '/opt/dopamine/',
                 ]
     
-                if (exactMatchBanned.includes(dir) || !(dir.startsWith('/home/dopamine/') || dir.startsWith('/opt2/dopamine/'))) {
+                if (exactMatchBanned.includes(dir) || !mustStartWith.find(base => dir.startsWith(base))) {
                     safe = false
                 }
             }
