@@ -1,7 +1,9 @@
 'use strict';
 
 const promisify = require('util').promisify;
+const path = require('path')
 const SSH2 = require('ssh2'); // TODO: check security
+const Input = require('./Input')
 const console = require('../lib/Log')
 const v = console.verbose
 
@@ -122,13 +124,15 @@ class SSHClient {
         let isDryMode = this._dryMode && !options.allowInDryMode
         if (!options.secret) v(`${isDryMode?'DRY RUN | ':''}${this._location}:${this._cwd}$`, cmd);
         if (!this._ssh) throw Error('Can not .exec commands before SSH is connected!')
-        if (isDryMode) return callback()
-        
         if (this._cwd) cmd = `cd ${this._cwd} && ` + cmd
-        this._ssh.exec(cmd, (err, stream) => {
-            if (err) return callback(err);
-            this._handleStream(stream, options, callback);
-        });
+        
+        this._protect(cmd).then(() => {
+            if (isDryMode) return callback()
+            this._ssh.exec(cmd, (err, stream) => {
+                if (err) return callback(err);
+                this._handleStream(stream, options, callback);
+            })
+        })
     }
     
     /**
@@ -162,6 +166,71 @@ class SSHClient {
         });
     }
     
+    
+    /**
+     * Some day this will save the world, I'm sure
+     */
+    async _protect(cmd) {
+        if(!this.isSafe(cmd)){
+            console.warn('WARNING! Found risky shell commands:')
+            console.info(cmd)
+            console.warn('Are you sure you know what are you doing?')
+            let answer = await Input.ask(`Please type 'approved' to proceed`, ['approved', 'no'], 'no')
+            if (answer !== 'approved') {
+                throw Error('The operation is not approved. Aborting..')
+            }
+        }
+    }
+    
+    /**
+     * Protect from accidental deletion of restricted server files
+     * United tested method
+     * @param {string} commands
+     * @return {boolean}
+     */
+    isSafe(commands){
+    
+        let filterRe = /^(rm|cd)\s+/
+        let cdRe = /^cd\s+(\S+)/
+        let rmRe = /^rm\s+-.*?r.*?\s+(\S+)/
+        
+        let safe = true
+        let baseDir = '/'
+        let cmds = commands.split(/&&|\|\|/g).map(c => c.trim()).filter(c => filterRe.test(c))
+        for(let cmd of cmds){
+            // console.log({cmds})
+            let cd = cmd.match(cdRe)
+            let rm = cmd.match(rmRe)
+    
+            if(cd && cd[1]) {
+                let dir = cd[1]
+                if(dir.startsWith('/')) baseDir = dir
+                else baseDir = path.join(baseDir, cd[1])
+            }
+            if(rm && rm[1]){
+                let dir = rm[1]
+                if (!dir.startsWith('/')) {
+                    dir = path.join(baseDir, rm[1])
+                }
+                dir = path.normalize(dir).replace(/\\/g, '/') // protect from /path/../
+                // console.log({dir})
+    
+                let exactMatchBanned = [
+                    '/home/dopamine/',
+                    '/home/dopamine/*',
+                    '/home/dopamine/production',
+                    '/home/dopamine/production/*',
+                    '/opt2/dopamine/',
+                    '/opt2/dopamine/*',
+                ]
+    
+                if (exactMatchBanned.includes(dir) || !(dir.startsWith('/home/dopamine/') || dir.startsWith('/opt2/dopamine/'))) {
+                    safe = false
+                }
+            }
+        }
+        return safe
+    }
     
 }
 
