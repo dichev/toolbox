@@ -3,7 +3,11 @@
 const Program = require('./src/Program')
 const CloudFlare = require('./src/plugins/CloudFlare')
 const HipChat = require('./src/plugins/HipChat')
+const Input = require('./src/tools/Input')
+const Shell = require('./src/tools/Shell')
+const SSHClient = require('./src/tools/SSHClient')
+const Tester = require('./src/tools/Tester')
+const MySQL = require('./src/tools/MySQL')
 
-
-module.exports = { Program }
+module.exports = { Program, Input, Shell, SSHClient, Tester, MySQL }
 module.exports.plugins = { CloudFlare, HipChat }
