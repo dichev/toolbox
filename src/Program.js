@@ -22,6 +22,7 @@ class Program {
         this._loopBy = null
         this._dryMode = false
         this._requiredFlags = []
+        this.isRun = false
         
         this.chat = new HipChat(chatToken)
         
@@ -129,7 +130,9 @@ class Program {
     
                 iterations = param.split(',')
             }
-            
+    
+    
+            this.isRun = true
             
             // await this.chat.notify(`${host} | Running fo`)
             if(!quiet) await this.chat.notify(`${this.actionName} | RUN: ${this._description} (by ${os.userInfo().username})`)
@@ -263,9 +266,14 @@ class Program {
         console.error(msg)
         if(err.stack) console.verbose(err.stack)
         
-        this.destroy()
-        this.chat.notify(`${this.actionName} | Aborting due error: <br/> ${msg.replace(/\n/g, '<br/>')}`, {color: 'red'}).catch(console.error)
-        setTimeout(() => process.exit(1), 500)
+        if(this.isRun) {
+            this.destroy()
+            this.chat.notify(`${this.actionName} | Aborting due error: <br/> ${msg.replace(/\n/g, '<br/>')}`, {color: 'red'}).catch(console.error)
+            setTimeout(() => process.exit(1), 500)
+        } else {
+            console.log('see --help')
+            process.exit(1)
+        }
     }
     
 }
