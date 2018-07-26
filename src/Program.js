@@ -63,8 +63,10 @@ class Program {
             if (!choices.includes(def)) throw Error(`The default option(${def}) is not allowed as choices`)
         }
         if(choices) description += ` Available: ${choices}`
-        
-        if(required) this._requiredFlags.push(flags)
+        if(required) {
+            description = '[required] ' + description
+            this._requiredFlags.push(flags)
+        }
 
         program.option(flags, description, (val) => {
             if (!choices || !Array.isArray(choices) || !choices.length) return val
@@ -271,7 +273,7 @@ class Program {
             this.chat.notify(`${this.actionName} | Aborting due error: <br/> ${msg.replace(/\n/g, '<br/>')}`, {color: 'red'}).catch(console.error)
             setTimeout(() => process.exit(1), 500)
         } else {
-            console.log('see --help')
+            console.log('Please see --help')
             process.exit(1)
         }
     }
