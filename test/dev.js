@@ -9,25 +9,25 @@
  */
 
 
-const Deployer = require('../index')
+const Program = require('../index').Program
 const HOSTS = [
     { name: 'dev-hermes-web1', ip: '192.168.106.32' },
     { name: 'dev-hermes-web2', ip: '192.168.106.33' },
 ]
 
-let deployer = new Deployer()
+let program = new Program()
 
 
-deployer
+program
     .description('Testing script')
     .option('-h, --hosts <list|all>', 'The target host names', { choices: HOSTS.map(h => h.name) })
     .loop('hosts')
 
     .run(async (host) => {
         
-        await deployer.shell().exec('date')
+        await program.shell().exec('date')
         
-        let ssh = await deployer.ssh(HOSTS.find(h => h.name === host).ip, 'root')
+        let ssh = await program.ssh(HOSTS.find(h => h.name === host).ip, 'root')
     
         if (await ssh.exists('/opt/dopamine/sys-metrics')) {
             await ssh.chdir('/opt/dopamine/sys-metrics')

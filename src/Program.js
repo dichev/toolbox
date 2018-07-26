@@ -13,7 +13,7 @@ const program = require('commander')
 const os = require('os')
 const isWin = os.platform() === 'win32'
 
-class App {
+class Program {
     
     constructor({chatToken = null } = {}) {
         this.params = {}
@@ -39,7 +39,7 @@ class App {
     
     /**
      * @param text
-     * @return {App}
+     * @return {Program}
      */
     description(text){
         program.description(text)
@@ -54,7 +54,7 @@ class App {
      *    @option {string|function} [def]
      *    @option {array} [choices]
      *    @option {bool}  [loop]
-     * @return {App}
+     * @return {Program}
      */
     option(flags, description = '', { def, choices } = {}){
         if (def && choices) {
@@ -76,7 +76,7 @@ class App {
     
     /**
      * @param {string}   option - specify by which option to loop, normally is 'hosts'
-     * @return {App}
+     * @return {Program}
      */
     loop(option = 'hosts'){
         this._loopBy = option
@@ -86,7 +86,7 @@ class App {
    
     /**
      * @param {function} fn
-     * @return {App}
+     * @return {Program}
      */
     async run(fn) {
         let quiet = false
@@ -105,7 +105,7 @@ class App {
             let parallel = false
             let parallelLimit = 0
             
-            if (typeof fn !== 'function') throw Error(`Invalid arguments! Expected deployer.run(async function), received deployer.run(${typeof fn})`)
+            if (typeof fn !== 'function') throw Error(`Invalid arguments! Expected program.run(async function), received program.run(${typeof fn})`)
             
             if (this.params.parallel !== undefined) {
                 let limit = this.params.parallel === true ? 0 : parseInt(this.params.parallel)
@@ -238,7 +238,7 @@ class App {
     }
     
     
-    get actionName() { // TODO: this is temporary until migration to deployer cli
+    get actionName() { // TODO: this is temporary until migration to program cli
         let parts = process.argv[1].replace(/\\/g, '/').split('/')
         let action = parts.pop().replace('.js', '')
         let command = parts.pop()
@@ -261,4 +261,4 @@ class App {
     
 }
 
-module.exports = App
+module.exports = Program
