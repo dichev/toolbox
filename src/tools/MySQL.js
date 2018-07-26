@@ -69,11 +69,9 @@ class MySQL {
             console.info(SQL)
             console.warn('Are you sure you know what are you doing?')
             
-            if(prompt){
-                let answer = await Input.ask(`Please type 'approved' to proceed`, ['approved', 'no'], 'no')
-                if(answer !== 'approved'){
-                    throw Error('The operation is not approved. Aborting..')
-                }
+            let answer = await Input.ask(`Please type 'approved' to proceed`, ['approved', 'no'], 'no')
+            if(answer !== 'approved'){
+                throw Error('The operation is not approved. Aborting..')
             }
         }
     }
