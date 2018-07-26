@@ -82,7 +82,7 @@ class MySQL {
      * @return {boolean}
      */
     isSafe(SQL) {
-        return /(DROP\s+DATABASE|DROP\s+USER|TRUNCATE\s+)/gmi.test(SQL) !== true
+        return /(DROP\s+DATABASE|DROP\s+USER)/gmi.test(SQL) !== true
     }
     
     

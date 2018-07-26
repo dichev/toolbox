@@ -26,13 +26,6 @@ it('detects not safe SQL statements', async () => {
         'dRoP useR',
         `DROP
          USER`,
-        
-        'TRUNCATE table;',
-        'SELECT 1; TRUNCATE   table;',
-        'TRUNCATE	table;',
-        'truncate ',
-        `TRUNCATE
-         table`
     ]
     
     for(let sql of fails){
