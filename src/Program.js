@@ -21,6 +21,7 @@ class Program {
         this._pools = []
         this._loopBy = null
         this._dryMode = false
+        this._requiredFlags = []
         
         this.chat = new HipChat(chatToken)
         
@@ -56,12 +57,13 @@ class Program {
      *    @option {bool}  [loop]
      * @return {Program}
      */
-    option(flags, description = '', { def, choices } = {}){
+    option(flags, description = '', { def, choices, required } = {}){
         if (def && choices) {
             if (!choices.includes(def)) throw Error(`The default option(${def}) is not allowed as choices`)
         }
         if(choices) description += ` Available: ${choices}`
         
+        if(required) this._requiredFlags.push(flags)
 
         program.option(flags, description, (val) => {
             if (!choices || !Array.isArray(choices) || !choices.length) return val
@@ -97,6 +99,13 @@ class Program {
             if(program.dryRun){
                 console.info('============== DRY RUN =============')
                 this._dryMode = true
+            }
+    
+            for(let flags of this._requiredFlags){
+                let option = program.options.find(o => o.flags === flags)
+                if(this.params[option.attributeName()] === undefined){
+                    throw Error(`Missing required parameter: ${flags}`)
+                }
             }
             
             quiet = this.params.quiet || false

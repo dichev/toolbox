@@ -20,7 +20,7 @@ let program = new Program()
 
 program
     .description('Testing script')
-    .option('-h, --hosts <list|all>', 'The target host names', { choices: HOSTS.map(h => h.name) })
+    .option('-h, --hosts <list|all>', 'The target host names', { choices: HOSTS.map(h => h.name), required: true })
     .loop('hosts')
 
     .run(async (host) => {
