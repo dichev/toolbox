@@ -33,7 +33,6 @@ class Program {
             .option('-f, --force', 'Suppress confirm messages (used for automation)')
             .option('-n, --dry-run', 'Dry run mode will do everything as usual except commands execution')
             .option('-q, --quiet', 'Turn off chat and some logs in stdout')
-            .version(require('../package.json').version)
     
         process.on('uncaughtException', (err) => this._errorHandler(err))
         process.on('unhandledRejection', (reason) => this._errorHandler(reason))
