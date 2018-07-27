@@ -27,14 +27,6 @@ class Program {
         this.isRun = false
         
         this.chat = new HipChat(chatToken)
-        
-        program
-            .option('-p, --parallel [limit]', 'When run with multiple hosts define how many commands to be executed in parallel. Set to 0 execute them all together. By default will be executed sequentially')
-            // .option('-i, --interactive', 'Turn ON the interactive mode')
-            .option('-v, --verbose', 'Turn ON log details of whats happening')
-            .option('-f, --force', 'Suppress confirm messages (used for automation)')
-            .option('-n, --dry-run', 'Dry run mode will do everything as usual except commands execution')
-            .option('-q, --quiet', 'Turn off chat and some logs in stdout')
     
         process.on('uncaughtException', (err) => this._errorHandler(err))
         process.on('unhandledRejection', (reason) => this._errorHandler(reason))
@@ -109,6 +101,14 @@ class Program {
         let quiet = false
         
         try {
+            program
+                .option('-p, --parallel [limit]', 'When run with multiple hosts define how many commands to be executed in parallel. Set to 0 execute them all together. By default will be executed sequentially')
+                // .option('-i, --interactive', 'Turn ON the interactive mode')
+                .option('-v, --verbose', 'Turn ON log details of whats happening')
+                .option('-f, --force', 'Suppress confirm messages (used for automation)')
+                .option('-n, --dry-run', 'Dry run mode will do everything as usual except commands execution')
+                .option('-q, --quiet', 'Turn off chat and some logs in stdout')
+            
             program.usage(this._usage)
             if(this._exampleUsage) {
                 program.on('--help', () => {
