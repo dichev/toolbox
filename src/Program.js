@@ -112,10 +112,21 @@ class Program {
             program.usage(this._usage)
             if(this._exampleUsage) {
                 program.on('--help', () => {
-                    console.log('\n  Example usage:\n')
+                    console.log('\n  Example usage:')
                     console.log(this._exampleUsage.trim().split('\n').map(s => '    ' + s.trim()).join('\n'));
                 })
             }
+    
+            // ugly but it works as once Niki said
+            program.helpInformationOrigin = program.helpInformation
+            program.helpInformation = () => {
+                let help = program.helpInformationOrigin()
+                help = help.replace(/( {2}Usage:) (\S+)/, '$1 node ' + this.actionPath)
+                help = help.replace(/( {2}Options:\n)\n/, '$1')
+                help = help.replace(/( {4}-p, --parallel)/, '\n\n  Additional Options:\n$1')
+                return help
+            }
+            
             program.parse(process.argv)
             this.params = program.opts()
             if(program.dryRun){
@@ -276,6 +287,13 @@ class Program {
         let action = parts.pop().replace('.js', '')
         let command = parts.pop()
         return `$ ${command} ${action}`
+    }
+    
+    get actionPath(){// TODO: this is temporary until migration to program cli
+        let parts = process.argv[1].replace(/\\/g, '/').split('/')
+        let action = parts.pop().replace('.js', '')
+        let command = parts.pop()
+        return `${command}/${action}`
     }
     
     /**

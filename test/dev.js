@@ -1,13 +1,6 @@
 #!/usr/bin/env node
 'use strict';
 
-/**
- * Usage:
- * $ node test/dev --hosts dev-hermes-web1,dev-hermes-web2
- * $ node test/dev --hosts dev-hermes-*
- * $ node test/dev --hosts all
- */
-
 
 const Program = require('../index').Program
 const HOSTS = [
@@ -20,6 +13,11 @@ let program = new Program()
 
 program
     .description('Testing script')
+    .example(`
+        node test/dev --hosts dev-hermes-web1,dev-hermes-web2
+        node test/dev --hosts dev-hermes-*
+        node test/dev --hosts all
+    `)
     .option('-h, --hosts <list|all>', 'The target host names', { choices: HOSTS.map(h => h.name), required: true })
     .loop('hosts')
 
