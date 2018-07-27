@@ -9,7 +9,7 @@ const console = require('./lib/Log')
 const Pattern = require('./lib/Pattern')
 const Chain = require('./lib/Chain')
 const HipChat = require('./plugins/HipChat')
-const program = require('commander')
+const commander = require('commander')
 const os = require('os')
 const isWin = os.platform() === 'win32'
 
@@ -37,7 +37,7 @@ class Program {
      * @return {Program}
      */
     description(text){
-        program.description(text)
+        commander.description(text)
         this._description = text
         return this
     }
@@ -72,7 +72,7 @@ class Program {
             this._requiredFlags.push(flags)
         }
 
-        program.option(flags, description, (val) => {
+        commander.option(flags, description, (val) => {
             if (!choices || !Array.isArray(choices) || !choices.length) return val
             if (val === 'all') return choices.join(',')
             let values = val.includes(',') ? val.split(',') : [val]
@@ -93,7 +93,7 @@ class Program {
     }
     
     parse(){
-        program
+        commander
             .option('-p, --parallel [limit]', 'When run with multiple hosts define how many commands to be executed in parallel. Set to 0 execute them all together. By default will be executed sequentially')
             // .option('-i, --interactive', 'Turn ON the interactive mode')
             .option('-v, --verbose', 'Turn ON log details of whats happening')
@@ -101,33 +101,33 @@ class Program {
             .option('-n, --dry-run', 'Dry run mode will do everything as usual except commands execution')
             .option('-q, --quiet', 'Turn off chat and some logs in stdout')
     
-        program.usage(this._usage)
+        commander.usage(this._usage)
         if (this._exampleUsage) {
-            program.on('--help', () => {
+            commander.on('--help', () => {
                 console.log('\n  Example usage:')
                 console.log(this._exampleUsage.trim().split('\n').map(s => '    ' + s.trim()).join('\n'));
             })
         }
     
         // ugly but it works as once Niki said
-        program.helpInformationOrigin = program.helpInformation
-        program.helpInformation = () => {
-            let help = program.helpInformationOrigin()
+        commander.helpInformationOrigin = commander.helpInformation
+        commander.helpInformation = () => {
+            let help = commander.helpInformationOrigin()
             help = help.replace(/( {2}Usage:) (\S+)/, '$1 node ' + this.actionPath)
             help = help.replace(/( {2}Options:\n)\n/, '$1')
             help = help.replace(/( {4}-p, --parallel)/, '\n\n  Additional Options:\n$1')
             return help
         }
     
-        program.parse(process.argv)
-        this.params = program.opts()
-        if (program.dryRun) {
+        commander.parse(process.argv)
+        this.params = commander.opts()
+        if (commander.dryRun) {
             console.info('============== DRY RUN =============')
             this._dryMode = true
         }
     
         for (let flags of this._requiredFlags) {
-            let option = program.options.find(o => o.flags === flags)
+            let option = commander.options.find(o => o.flags === flags)
             if (this.params[option.attributeName()] === undefined) {
                 throw Error(`Missing required parameter: ${flags}`)
             }
