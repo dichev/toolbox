@@ -115,7 +115,7 @@ class Program {
             let help = commander.helpInformationOrigin()
             help = help.replace(/( {2}Usage:) (\S+)/, '$1 node ' + this.actionPath)
             help = help.replace(/( {2}Options:\n)\n/, '$1')
-            help = help.replace(/( {4}-p, --parallel)/, '\n\n  Additional Options:\n$1')
+            help = help.replace(/( {4}-p, --parallel)/, '\n  Additional Options:\n$1')
             return help
         }
     
