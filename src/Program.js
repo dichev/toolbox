@@ -18,6 +18,8 @@ class Program {
     constructor({chatToken = null } = {}) {
         this.params = {}
         this._description = ''
+        this._usage = ''
+        this._exampleUsage = ''
         this._pools = []
         this._loopBy = null
         this._dryMode = false
@@ -39,12 +41,21 @@ class Program {
     }
     
     /**
-     * @param text
+     * @param {string} text
      * @return {Program}
      */
     description(text){
         program.description(text)
         this._description = text
+        return this
+    }
+    
+    /**
+     * @param {string} text
+     * @return {Program}
+     */
+    example(text){
+        this._exampleUsage = text
         return this
     }
     
@@ -64,6 +75,8 @@ class Program {
         if(choices) description += ` Available: ${choices}`
         if(required) {
             description = '[required] ' + description
+            let parts = flags.split(', ')
+            this._usage += (parts[1] || parts[0]) + ' '
             this._requiredFlags.push(flags)
         }
 
@@ -96,6 +109,13 @@ class Program {
         let quiet = false
         
         try {
+            program.usage(this._usage)
+            if(this._exampleUsage) {
+                program.on('--help', () => {
+                    console.log('\n  Example usage:\n')
+                    console.log(this._exampleUsage.trim().split('\n').map(s => '    ' + s.trim()).join('\n'));
+                })
+            }
             program.parse(process.argv)
             this.params = program.opts()
             if(program.dryRun){
