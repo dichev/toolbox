@@ -19,11 +19,12 @@ class HipChat {
      * @param {string}   message - May contain basic tags: a, b, i, strong, em, br, img, pre, code, lists, tables
      * @param {string}  [color] - Background color: yellow, green, red, purple, gray, random
      * @param {boolean} [notify] - Whether this message should trigger a user popup notification
-     * @param {string}  [message_format'] - html or text
+     * @param {string}  [message_format] - html or text
+     * @param {boolean} [silent] - do not ouput message in stdout
      * @param {int}     [ms] - how many sec to wait until resolve the promise
      */
-    async notify(message = 'NO MESSAGE', {color = 'gray', notify = true, message_format = 'html'} = {}, ms = 500) {
-        console.info(message)
+    async notify(message = 'NO MESSAGE', {color = 'gray', notify = true, message_format = 'html', silent = false} = {}, ms = 500) {
+        if(!silent) console.info(message)
         if(!this._urlToken) return
         // Do not wait response to avoid execution blocking by the HipChat http request
         this.notifyWait(message, { color, notify, message_format }).then().catch(err => console)
@@ -32,6 +33,10 @@ class HipChat {
     
     async notifyWait(message = 'NO MESSAGE', {color = 'gray', notify = true, message_format = 'html'} = {}) {
         if (!this._urlToken) return
+        
+        if(message_format === 'html'){
+            message = message.replace(/\n/g, '<br/>')
+        }
         
         let options = {
             method: 'POST',

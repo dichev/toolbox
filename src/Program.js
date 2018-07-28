@@ -113,7 +113,7 @@ class Program {
         commander.helpInformationOrigin = commander.helpInformation
         commander.helpInformation = () => {
             let help = commander.helpInformationOrigin()
-            help = help.replace(/( {2}Usage:) (\S+)/, '$1 node ' + this.actionPath)
+            help = help.replace(/( {2}Usage:) (\S+)/, '$1 node ' + this.name.command + '/' + this.name.action)
             help = help.replace(/( {2}Options:\n)\n/, '$1')
             help = help.replace(/( {4}-p, --parallel)/, '\n  Additional Options:\n$1')
             return help
@@ -173,7 +173,7 @@ class Program {
             this.isRun = true
             
             // await this.chat.notify(`${host} | Running fo`)
-            if(!quiet) await this.chat.notify(`${this.actionName} | RUN: ${this._description} (by ${os.userInfo().username})`)
+            if(!quiet) await this.chat.notify(`${this._description} (by ${os.userInfo().username})<br/><code>$ ${this.name.command} ${this.name.action} ${process.argv.slice(2).join(' ')}</code>`, { silent: true })
             
             if(!iterations.length){
                 await fn()
@@ -181,7 +181,7 @@ class Program {
             else if(parallel){
                 if (!quiet) console.info(`\n-- Running in parallel(${parallelLimit}): ${iterations} -----------------------------------------`)
                 let fnPromises = iterations.map(host => async () => {
-                    if (!quiet) await this.chat.notify(`${this.actionName} | Executing on ${host}..`)
+                    if (!quiet) await this.chat.notify(`${this.name.action} | Executing on ${host}`, { silent: true })
                     return fn(host)
                 })
                 await Chain.parallelLimit(parallelLimit, fnPromises)
@@ -189,7 +189,7 @@ class Program {
             else {
                 for (let host of iterations) {
                     if (!quiet && iterations.length > 1) console.info(`\n-- ${host} -----------------------------------------`)
-                    if (!quiet) await this.chat.notify(`${this.actionName} | Executing on ${host}..`)
+                    if (!quiet) await this.chat.notify(`${this.name.action} | Executing on ${host}`, { silent: true })
                     await fn(host)
                 }
             }
@@ -198,7 +198,7 @@ class Program {
             await this._errorHandler(err)
         }
         this.destroy()
-        if (!quiet) await this.chat.notify(`${this.actionName} | Finished!`, {color: 'green'})
+        if (!quiet) await this.chat.notify(`${this.name.action} | Finished!`, {color: 'green', silent: true })
         
         return this
     }
@@ -287,20 +287,16 @@ class Program {
         return new Promise((resolve) => setTimeout(resolve, sec * 1000))
     }
     
-    
-    get actionName() { // TODO: this is temporary until migration to program cli
+    /**
+     * @return {{command: string, action: string}}
+     */
+    get name() {// TODO: this is temporary until migration to program cli
         let parts = process.argv[1].replace(/\\/g, '/').split('/')
         let action = parts.pop().replace('.js', '')
         let command = parts.pop()
-        return `$ ${command} ${action}`
+        return {command,action}
     }
     
-    get actionPath(){// TODO: this is temporary until migration to program cli
-        let parts = process.argv[1].replace(/\\/g, '/').split('/')
-        let action = parts.pop().replace('.js', '')
-        let command = parts.pop()
-        return `${command}/${action}`
-    }
     
     /**
      * @param {Error} err
@@ -313,7 +309,7 @@ class Program {
         
         if(this.isRun) {
             this.destroy()
-            this.chat.notify(`${this.actionName} | Aborting due error: <br/> ${msg.replace(/\n/g, '<br/>')}`, {color: 'red'}).catch(console.error)
+            this.chat.notify(`${this.name.action} | Aborting due error: <br/> ${msg.replace(/\n/g, '<br/>')}`, {color: 'red', silent: true}).catch(console.error)
             setTimeout(() => process.exit(1), 500)
         } else {
             console.log('Please see --help')
