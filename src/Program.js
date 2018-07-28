@@ -15,7 +15,7 @@ const isWin = os.platform() === 'win32'
 
 class Program {
     
-    constructor({chatToken = null } = {}) {
+    constructor({chat = null } = {}) {
         this.params = {}
         this._description = ''
         this._usage = ''
@@ -26,7 +26,7 @@ class Program {
         this._requiredFlags = []
         this.isRun = false
         
-        this.chat = new HipChat(chatToken)
+        this.chat = new HipChat(chat)
     
         process.on('uncaughtException', (err) => this._errorHandler(err))
         process.on('unhandledRejection', (reason) => this._errorHandler(reason))
