@@ -173,7 +173,7 @@ class Program {
             this.isRun = true
             
             // await this.chat.notify(`${host} | Running fo`)
-            if(!quiet) await this.chat.notify(`${this._description} (by ${os.userInfo().username})<br/><code>$ ${this.name.command} ${this.name.action} ${process.argv.slice(2).join(' ')}</code>`, { silent: true })
+            if(!quiet) await this.chat.notify(`${this._description} (by ${os.userInfo().username})<br/><code>$ ${this.name.command} ${this.name.action} ${process.argv.slice(2).join(' ')}</code>`, { silent: true, popup: true })
             
             if(!iterations.length){
                 await fn()
@@ -309,7 +309,7 @@ class Program {
         
         if(this.isRun) {
             this.destroy()
-            this.chat.notify(`${this.name.action} | Aborting due error: <br/> ${msg.replace(/\n/g, '<br/>')}`, {color: 'red', silent: true}).catch(console.error)
+            this.chat.notify(`${this.name.action} | Aborting due error: <br/> ${msg.replace(/\n/g, '<br/>')}`, {color: 'red', silent: true, popup: true}).catch(console.error)
             setTimeout(() => process.exit(1), 500)
         } else {
             console.log('Please see --help')
