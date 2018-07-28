@@ -19,22 +19,22 @@ class HipChat {
      * @param {string}   message - May contain basic tags: a, b, i, strong, em, br, img, pre, code, lists, tables
      * @param {string}  [color] - Background color: yellow, green, red, purple, gray, random
      * @param {boolean} [popup] - Whether this message should trigger a user popup notification
-     * @param {string}  [message_format] - html or text
+     * @param {string}  [format] - html or text
      * @param {boolean} [silent] - do not ouput message in stdout
      * @param {int}     [ms] - how many sec to wait until resolve the promise
      */
-    async notify(message = 'NO MESSAGE', {color = 'gray', popup = false, message_format = 'html', silent = false} = {}, ms = 500) {
+    async notify(message = 'NO MESSAGE', {color = 'gray', popup = false, format = 'html', silent = false} = {}, ms = 500) {
         if(!silent) console.info(message)
         if(!this._urlToken) return
         // Do not wait response to avoid execution blocking by the HipChat http request
-        this.notifyWait(message, { color, notify, message_format }).then().catch(err => console)
+        this.notifyWait(message, { color, popup, format }).then().catch(err => console)
         await delay(ms)
     }
     
-    async notifyWait(message = 'NO MESSAGE', {color = 'gray', popup = false, message_format = 'html'} = {}) {
+    async notifyWait(message = 'NO MESSAGE', {color = 'gray', popup = false, format = 'html'} = {}) {
         if (!this._urlToken) return
         
-        if(message_format === 'html'){
+        if(format === 'html'){
             message = message.replace(/\n/g, '<br/>')
         }
         
@@ -43,7 +43,7 @@ class HipChat {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ color,  message,  notify: popup,  message_format })
+            body: JSON.stringify({ color,  message,  notify: popup,  message_format: format })
         }
     
     
