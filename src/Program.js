@@ -64,7 +64,7 @@ class Program {
         if (def && choices) {
             if (!choices.includes(def)) throw Error(`The default option(${def}) is not allowed as choices`)
         }
-        if(choices) description += ` Available: ${choices}`
+        if(choices) description += `. Available: ${choices}`
         if(required) {
             description = '[required] ' + description
             let parts = flags.split(', ')
@@ -204,6 +204,10 @@ class Program {
     }
     
     async confirm(question, def = 'yes', expect = ['yes', 'y']) {
+        if(this.params.force){
+            console.log(question, 'yes (force)')
+            return
+        }
         return Input.confirm(question, def, expect)
     }
     
