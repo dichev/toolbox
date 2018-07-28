@@ -5,7 +5,7 @@ const Shell = require('./tools/Shell')
 const Tester = require('./tools/Tester')
 const MySQL = require('./tools/MySQL')
 const SSHClient = require('./tools/SSHClient')
-const console = require('./lib/Log')
+const console = require('./lib/Log') // TODO: rename
 const Pattern = require('./lib/Pattern')
 const Chain = require('./lib/Chain')
 const HipChat = require('./plugins/HipChat')
@@ -16,12 +16,11 @@ const isWin = os.platform() === 'win32'
 class Program {
     
     constructor({chat = null } = {}) {
-        this.params = {}
+        this.params = null
         this._description = ''
         this._usage = ''
         this._exampleUsage = ''
         this._pools = []
-        this._loopBy = null
         this._dryMode = false
         this._requiredFlags = []
         this.isRun = false
@@ -83,16 +82,9 @@ class Program {
         return this
     }
     
-    /**
-     * @param {string}   option - specify by which option to loop, normally is 'hosts'
-     * @return {Program}
-     */
-    loop(option = 'hosts'){
-        this._loopBy = option
-        return this
-    }
-    
     parse(){
+        if(this.params) return this // already parsed
+        
         commander
             .option('-p, --parallel [limit]', 'When run with multiple hosts define how many commands to be executed in parallel. Set to 0 execute them all together. By default will be executed sequentially')
             // .option('-i, --interactive', 'Turn ON the interactive mode')
@@ -132,53 +124,64 @@ class Program {
                 throw Error(`Missing required parameter: ${flags}`)
             }
         }
+    
+        if (this.params.parallel !== undefined) {
+            let limit = this.params.parallel === true ? 0 : parseInt(this.params.parallel)
+            if (limit < 0) throw Error(`Invalid value of ${limit} for --parallel <limit>`)
+            this.params.parallel = limit
+        }
+        
+        console.verbose('Parsed params:')
+        console.verbose(this.params)
         
         return this
     }
     
-   
     /**
      * @param {function} fn
      * @return {Program}
      */
     async run(fn) {
-        let quiet = false
-        
+        this.parse()
+        if (typeof fn !== 'function') throw Error(`Invalid arguments! Expected program.run(async function), received program.run(${typeof fn})`)
+    
         try {
-            this.parse()
-            
-            quiet = this.params.quiet || false
-    
-            let iterations = []
-            let parallel = false
-            let parallelLimit = 0
-            
-            if (typeof fn !== 'function') throw Error(`Invalid arguments! Expected program.run(async function), received program.run(${typeof fn})`)
-            
-            if (this.params.parallel !== undefined) {
-                let limit = this.params.parallel === true ? 0 : parseInt(this.params.parallel)
-                if(limit < 0) throw Error(`Invalid value of ${limit} for --parallel <limit>`)
-                parallel = true
-                parallelLimit = limit
-            }
-            
-            if(this._loopBy) {
-                let param = this.params[this._loopBy]
-                if(!param) throw Error(`Invalid parameter option:(${this._loopBy})! It's expected to be array and to be predefined as cli option`)
-    
-                iterations = param.split(',')
-            }
-    
-    
             this.isRun = true
+            await this._before()
+            await fn()
+            await this._after()
+            this.destroy()
+        }
+        catch (err) {
+            await this._errorHandler(err)
+        }
+        
+        
+        return this
+    }
+   
+    /**
+     * @param {string} loopBy
+     * @param {function} fn
+     * @return {Program}
+     */
+    async iterate(loopBy, fn) {
+        this.parse()
+        
+        if (typeof fn !== 'function' || typeof loopBy !== 'string') throw Error(`Invalid arguments! Expected program.iterate(string, async function), received program.run(${loopBy}, ${typeof fn})`)
+        if(!this.params[loopBy]) throw Error(`Invalid parameter option:(${loopBy})! It's expected to be array and to be predefined as program option.`)
+        
+        let quiet = this.params.quiet || false
+        let parallel = this.params.parallel !== undefined
+        let parallelLimit = this.params.parallel || 0
+        let iterations = this.params[loopBy].split(',')
+        
+    
+        try {
+            this.isRun = true
+            await this._before()
             
-            // await this.chat.notify(`${host} | Running fo`)
-            if(!quiet) await this.chat.notify(`${this._description} (by ${os.userInfo().username})<br/><code>$ ${this.name.command} ${this.name.action} ${process.argv.slice(2).join(' ')}</code>`, { silent: true, popup: true })
-            
-            if(!iterations.length){
-                await fn()
-            }
-            else if(parallel){
+            if(parallel){
                 if (!quiet) console.info(`\n-- Running in parallel(${parallelLimit}): ${iterations} -----------------------------------------`)
                 let fnPromises = iterations.map(host => async () => {
                     if (!quiet) await this.chat.notify(`${this.name.action} | Executing on ${host}`, { silent: true })
@@ -193,14 +196,27 @@ class Program {
                     await fn(host)
                 }
             }
+    
+            await this._after()
+            this.destroy()
         }
         catch (err) {
             await this._errorHandler(err)
         }
-        this.destroy()
-        if (!quiet) await this.chat.notify(`${this.name.action} | Finished!`, {color: 'green', silent: true })
-        
         return this
+    }
+    
+    async _before(){
+        if(!this.quiet) {
+            let msg = `${this._description} (by ${os.userInfo().username})<br/><code>$ ${this.name.command} ${this.name.action} ${process.argv.slice(2).join(' ')}</code>`
+            await this.chat.notify(msg, { silent: true, popup: true })
+        }
+    }
+    
+    async _after(){
+        if(!this.quiet) {
+            await this.chat.notify(`${this.name.action} | Finished!`, {color: 'green', silent: true })
+        }
     }
     
     async confirm(question, def = 'yes', expect = ['yes', 'y']) {
@@ -249,7 +265,7 @@ class Program {
     
     /**
      * @param {object} cfg
-     * @return {MySQL}
+     * @return {Promise<MySQL>}
      */
     async mysql(cfg = {}) {
         let db = new MySQL(this._dryMode)
