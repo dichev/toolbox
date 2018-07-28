@@ -19,9 +19,8 @@ program
         node test/dev --hosts all
     `)
     .option('-h, --hosts <list|all>', 'The target host names', { choices: HOSTS.map(h => h.name), required: true })
-    .loop('hosts')
 
-    .run(async (host) => {
+    .iterate('hosts', async (host) => {
         
         await program.shell().exec('date')
         
