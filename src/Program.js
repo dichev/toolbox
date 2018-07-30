@@ -207,14 +207,14 @@ class Program {
     }
     
     async _before(){
-        if(!this.quiet) {
+        if(!this.params.quiet) {
             let msg = `${this._description} (by ${os.userInfo().username})<br/><code>$ ${this.name.command} ${this.name.action} ${process.argv.slice(2).join(' ')}</code>`
             await this.chat.notify(msg, { silent: true, popup: true })
         }
     }
     
     async _after(){
-        if(!this.quiet) {
+        if(!this.params.quiet) {
             await this.chat.notify(`${this.name.action} | Finished!`, {color: 'green', silent: true })
         }
     }
