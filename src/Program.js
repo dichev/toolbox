@@ -290,8 +290,8 @@ class Program {
      * @return {Tester}
      */
     tester(prefix = ''){
-        let parallel = this.params.parallel
-        return new Tester(parallel ? prefix : '', !!parallel)
+        let parallel = this.params.parallel !== undefined
+        return new Tester(parallel ? prefix : '', parallel)
     }
 
     
