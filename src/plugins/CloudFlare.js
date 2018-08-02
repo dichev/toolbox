@@ -43,10 +43,11 @@ class CloudFlare {
             result = await response.json()
             let raw = JSON.stringify(result, null, 4)
             this.silent ? console.verbose(raw) : console.log(raw)
+            if(!result.success) throw Error('The response is not successful')
         }
         catch (err) {
-            result = err.error ? err.error : { success: false, msg: err.toString() }
-            console.error(result)
+            let msg = result.errors ? result.errors.map(e => e.message).join(' | ') : err.toString()
+            throw Error('CF Error: ' + msg)
         }
         
         return result
