@@ -46,9 +46,10 @@ class SSHClient {
      * @param {boolean} [options.silent]
      * @param {boolean} [options.secret]
      * @param {boolean} [options.allowInDryMode]
+     * @param {boolean} [options.trim]
      */
-    async exec(cmd, {silent = false, secret = false, allowInDryMode = false} = {}) {
-        return promisify(this._exec.bind(this))(cmd, {silent, secret, allowInDryMode})
+    async exec(cmd, { silent = false, secret = false, allowInDryMode = false, trim = true } = {}) {
+        return promisify(this._exec.bind(this))(cmd, {silent, secret, allowInDryMode, trim})
     }
     
     
@@ -143,25 +144,29 @@ class SSHClient {
      * @param {function} callback
      * @private
      */
-    _handleStream(process, { secret = false, silent = false}, callback) {
+    _handleStream(process, { secret = false, silent = false, trim = true }, callback) {
         let _stdout = '';
         let _stderr = '';
         
         process.on('close', (code) => {
             let error = (code !== 0) ? new Error(_stderr || 'Error code: ' + code) : null;
-            callback(error, _stdout.trim(), _stderr.trim());
+            if(trim){
+                _stdout = _stdout.trim()
+                _stderr = _stderr.trim()
+            }
+            callback(error, _stdout, _stderr);
         });
         
         
         process.stdout.on('data', (data) => {
-            let stdout = data.toString().trim();
-            _stdout += stdout + '\n';
+            let stdout = data.toString();
+            _stdout += stdout;
             if(!secret) (this._silent || silent) ? v(stdout) : console.log(stdout);
         });
         
         process.stderr.on('data', (data) => {
-            let stderr = data.toString().trim();
-            _stderr += stderr + '\n';
+            let stderr = data.toString();
+            _stderr += stderr;
             if(!secret) (this._silent || silent) ? v(stderr) : console.warn(stderr);
         });
     }
