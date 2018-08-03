@@ -92,6 +92,7 @@ class Program {
             .option('-f, --force', 'Suppress confirm messages (used for automation)')
             .option('-n, --dry-run', 'Dry run mode will do everything as usual except commands execution')
             .option('-q, --quiet', 'Turn off chat and some logs in stdout')
+            .option('--no-chat', 'Disable chat notification if they are activated')
     
         commander.usage(this._usage)
         if (this._exampleUsage) {
@@ -129,6 +130,10 @@ class Program {
             let limit = this.params.parallel === true ? 0 : parseInt(this.params.parallel)
             if (limit < 0) throw Error(`Invalid value of ${limit} for --parallel <limit>`)
             this.params.parallel = limit
+        }
+        
+        if(this.params.chat === false){
+            this.chat.enabled = false
         }
         
         console.verbose('Parsed params:')

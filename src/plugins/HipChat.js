@@ -11,7 +11,11 @@ class HipChat {
      */
     constructor(urlToken) {
         this._urlToken = urlToken
+        this._enabled = !!urlToken
     }
+    
+    get enabled() { return this._enabled }
+    set enabled(v){ return this._enabled = !!v }
     
     /**
      * Full HipChat Api docs here: https://www.hipchat.com/docs/apiv2/method/send_room_notification
@@ -25,14 +29,14 @@ class HipChat {
      */
     async notify(message = 'NO MESSAGE', {color = 'gray', popup = false, format = 'html', silent = false} = {}, ms = 500) {
         if(!silent) console.info(message)
-        if(!this._urlToken) return
+        if(!this._enabled) return
         // Do not wait response to avoid execution blocking by the HipChat http request
         this.notifyWait(message, { color, popup, format }).then().catch(err => console)
         await delay(ms)
     }
     
     async notifyWait(message = 'NO MESSAGE', {color = 'gray', popup = false, format = 'html'} = {}) {
-        if (!this._urlToken) return
+        if (!this._enabled) return
         
         if(format === 'html'){
             message = message.replace(/\n/g, '<br/>')
