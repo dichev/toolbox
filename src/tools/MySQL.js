@@ -5,12 +5,20 @@ const SSHClient = require('./SSHClient');
 const mysql = require('mysql2/promise'); // TODO: too much deps
 const console = require('../lib/Log')
 const v = console.verbose
+const sleep = (sec) => new Promise((resolve) => setTimeout(resolve, sec * 1000))
 
 class MySQL {
     
     constructor(dryMode = false) { // TODO: dryMode
         this._db = null
         this._dryMode = dryMode
+        
+        this._thresholds = {
+            enabled: false,
+            connections: 300,
+            interval: 2, // sec
+            lastCheck: Date.now()
+        }
     }
     
     
@@ -55,9 +63,37 @@ class MySQL {
         v(`${this._dryMode?'DRY RUN | ':''}[mysql] ${SQL.length > 200 ? SQL.substr(0, 200) + '..' : SQL} [${params||''}]`)
         await this._protect(SQL)
         if(this._dryMode) return []
+        
+        if(this._thresholds.enabled) await this._waitOnHighLoad()
+        
         let [rows, fields] = await this._db.query(SQL, params)
+        v(rows)
         return rows
     }
+    
+    highLoadProtection({ enabled = true, connections = 300, interval = 2 }){
+        if(enabled) console.info(`[mysql] High load protection activated (limit ${connections} connections)`)
+        this._thresholds.enabled = enabled
+        this._thresholds.connections = connections
+        this._thresholds.interval = interval
+    }
+    
+    async _waitOnHighLoad(){
+        const t = this._thresholds
+        if(!t.enabled || !t.connections) return
+        if(Date.now()-t.lastCheck < t.interval*1000) return
+        t.lastCheck = Date.now()
+        
+        let [rows, fields] = await this._db.query(`SHOW GLOBAL STATUS like 'threads_connected'`)
+        let threads = parseInt(rows[0].Value)
+        v(`[mysql] Detected ${threads} active connections`)
+        if(threads > t.connections){
+            console.warn(`[mysql] Pausing query execution due high load: ${threads} connections (${t.connections} limit)`)
+            await sleep(t.interval)
+            return this._waitOnHighLoad()
+        }
+    }
+    
     
     /**
      * Once upon a time a query with DROP DATABASE was executed on production..
