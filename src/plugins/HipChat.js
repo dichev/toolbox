@@ -39,7 +39,7 @@ class HipChat {
         if (!this._enabled) return
         
         if(format === 'html'){
-            message = message.replace(/\n/g, '<br/>')
+            message = message.trim().replace(/\n/g, '<br/>')
         }
         
         let options = {
