@@ -5,6 +5,7 @@ const path = require('path')
 const SSH2 = require('ssh2'); // TODO: check security
 const Input = require('./Input')
 const console = require('../lib/Log')
+const fs = require('fs')
 const v = console.verbose
 
 class SSHClient {
@@ -86,7 +87,60 @@ class SSHClient {
             )
         })
     }
-   
+    
+    
+    async readFile(path) {
+        v(`[sftp] Reading from ${path}`)
+        return new Promise((resolve, reject) => {
+            this._ssh.sftp((err, sftp) => {
+                if (err) return reject(err)
+                let readStream = sftp.createReadStream(path);
+                let content = ''
+                readStream.on('data', data => content += data)
+                readStream.on('close', () => {
+                    v(`[sftp] Data read ${path}`)
+                    sftp.end();
+                    resolve(content)
+                })
+            });
+        })
+    }
+    
+    
+    async writeFile(path, data){
+        v(`[sftp] Writing to ${path}`)
+        return new Promise((resolve, reject) => {
+            this._ssh.sftp((err, sftp) => {
+                if (err) return reject(err)
+                let writeStream = sftp.createWriteStream(path);
+                writeStream.on('close', () => {
+                    v(`[sftp] Data written to ${path}`)
+                    sftp.end();
+                    resolve()
+                })
+                writeStream.write(data.toString())
+                writeStream.end()
+            });
+        })
+    }
+    
+     async uploadFile(localPath, remotePath){
+        v(`[sftp] Uploading ${localPath} to ${remotePath}`)
+        return new Promise((resolve, reject) => {
+            this._ssh.sftp((err, sftp) => {
+                if (err) return reject(err)
+                let readStream = fs.createReadStream(localPath);
+                let writeStream = sftp.createWriteStream(remotePath);
+                writeStream.on('close', () => {
+                    v(`[sftp] Data written to ${remotePath}`)
+                    sftp.end();
+                    resolve()
+                })
+                readStream.pipe(writeStream)
+            });
+        })
+    }
+    
     
     /**
      * @param {object} cfg
