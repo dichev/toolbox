@@ -19,6 +19,7 @@ class MySQL {
     constructor(dryMode = false) { // TODO: dryMode
         /** @type PromiseConnection **/
         this._db = null
+        this._ssh = null
         this._dryMode = dryMode
         this._dbName = null
         
@@ -56,8 +57,8 @@ class MySQL {
             user: user,
             password: password,
             database: database,
-            supportBigNumbers: false,
-            bigNumberStrings: false,
+            supportBigNumbers: true,
+            bigNumberStrings: true,
             dateStrings: 'date',
             multipleStatements: true
         }
@@ -70,13 +71,19 @@ class MySQL {
             
             let port = `1${Date.now().toString().substr(-4)}` // random port
             cfg.stream = await ssh.tunnel(port, 3306)
-            
+            this._ssh = ssh
         }
     
         this._db = await mysql.createConnection(cfg)
         this._dbName = database
         
         return this
+    }
+    
+    async disconnect(){
+        if (this._db) this._db.end()
+        if (this._ssh) await this._ssh.end()
+        this._db = this._ssh = null
     }
     
     // TODO: implement --show-warnings
