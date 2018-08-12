@@ -8,6 +8,7 @@ const Shell = require('./src/tools/Shell')
 const SSHClient = require('./src/tools/SSHClient')
 const Tester = require('./src/tools/Tester')
 const MySQL = require('./src/tools/MySQL')
+const MySQLDumper = require('./src/tools/MySQLDumper')
 
-module.exports = { Program, Input, Shell, SSHClient, Tester, MySQL }
+module.exports = { Program, Input, Shell, SSHClient, Tester, MySQL, MySQLDumper }
 module.exports.plugins = { CloudFlare, HipChat }

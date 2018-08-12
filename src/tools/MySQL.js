@@ -1,8 +1,9 @@
 'use strict'
 
 const Input = require('./Input')
-const SSHClient = require('./SSHClient');
-const mysql = require('mysql2/promise'); // TODO: too much deps
+const SSHClient = require('./SSHClient')
+const mysql = require('mysql2/promise') // TODO: too much deps
+const MySQLDumper = require('./MySQLDumper')
 const console = require('../lib/Log')
 const v = console.verbose
 const sleep = (sec) => new Promise((resolve) => setTimeout(resolve, sec * 1000))
@@ -16,6 +17,7 @@ const sqlTrim = (sql) => {
 class MySQL {
     
     constructor(dryMode = false) { // TODO: dryMode
+        /** @type PromiseConnection **/
         this._db = null
         this._dryMode = dryMode
         this._dbName = null
@@ -32,6 +34,13 @@ class MySQL {
      * @return {string|null}
      */
     get dbname() { return this._dbName }
+    
+    /**
+     * @return {PromiseConnection}
+     */
+    getConnection(){
+        return this._db
+    }
     
     /**
      * @param {string} host
@@ -81,6 +90,11 @@ class MySQL {
         let [rows, fields] = await this._db.query(SQL, params)
         v('-> Results:', rows.length + '\n')
         return rows
+    }
+    
+    async dump({exportSchema = true, exportData = false, sortKeys = false, maxChunkSize = 1000, dest = null, modifiers = [], excludeTables = [], includeTables = [], excludeColumns = {}, reorderColumns = {}}){
+        let dumper = new MySQLDumper(this.getConnection())
+        return await dumper.dump({exportSchema, exportData, sortKeys, maxChunkSize, dest, modifiers, excludeTables, includeTables, excludeColumns, reorderColumns})
     }
     
     highLoadProtection({ enabled = true, connections = 300, interval = 2 }){
