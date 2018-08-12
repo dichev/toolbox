@@ -6,12 +6,19 @@ const mysql = require('mysql2/promise'); // TODO: too much deps
 const console = require('../lib/Log')
 const v = console.verbose
 const sleep = (sec) => new Promise((resolve) => setTimeout(resolve, sec * 1000))
+const sqlTrim = (sql) => {
+    sql = sql.trim().replace(/^(  )+/gm, '  ')
+    let lines = sql.split(/\r\n|\r|\n/)
+    if (lines.length > 6) sql = lines.slice(0, 6).join('\n') + `\n.. (${lines.length-6} more)`
+    return sql
+}
 
 class MySQL {
     
     constructor(dryMode = false) { // TODO: dryMode
         this._db = null
         this._dryMode = dryMode
+        this._dbName = null
         
         this._thresholds = {
             enabled: false,
@@ -21,6 +28,10 @@ class MySQL {
         }
     }
     
+    /**
+     * @return {string|null}
+     */
+    get dbname() { return this._dbName }
     
     /**
      * @param {string} host
@@ -54,20 +65,21 @@ class MySQL {
         }
     
         this._db = await mysql.createConnection(cfg)
+        this._dbName = database
         
         return this
     }
     
     // TODO: implement --show-warnings
     async query(SQL, params){
-        v(`${this._dryMode?'DRY RUN | ':''}[mysql] ${SQL.length > 200 ? SQL.substr(0, 200) + '..' : SQL} [${params||''}]`)
+        v(`${this._dryMode?'DRY RUN | ':''}[mysql]\n${sqlTrim(SQL)}\n[${params||''}]`)
         await this._protect(SQL)
         if(this._dryMode) return []
         
         if(this._thresholds.enabled) await this._waitOnHighLoad()
         
         let [rows, fields] = await this._db.query(SQL, params)
-        v(rows)
+        v('-> Results:', rows.length + '\n')
         return rows
     }
     
