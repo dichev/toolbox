@@ -82,7 +82,7 @@ class MySQL {
     
     async disconnect(){
         if (this._db) this._db.end()
-        if (this._ssh) await this._ssh.end()
+        if (this._ssh) await this._ssh.disconnect()
         this._db = this._ssh = null
     }
     

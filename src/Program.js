@@ -20,7 +20,7 @@ class Program {
         this._description = ''
         this._usage = ''
         this._exampleUsage = ''
-        this._pools = []
+        this._pools = { ssh: [], db: []}
         this._dryMode = false
         this._requiredFlags = []
         this.isRun = false
@@ -251,7 +251,7 @@ class Program {
             agentForward: true
         })
     
-        this._pools.push(ssh)
+        this._pools.ssh.push(ssh)
         
         if(cmd){
             try {
@@ -263,7 +263,7 @@ class Program {
             return null
         }
         else {
-            this._pools.push(ssh)
+            this._pools.ssh.push(ssh)
             return ssh
         }
     }
@@ -280,6 +280,7 @@ class Program {
             else ssh = await this.ssh(cfg.ssh.host, cfg.ssh.user)
         }
         await db.connect(cfg, ssh)
+        this._pools.db.push(db)
         return db
     }
    
@@ -301,8 +302,11 @@ class Program {
 
     
     destroy(){
-        while (this._pools.length) {
-            this._pools.shift().disconnect()
+        while (this._pools.db.length) {
+            this._pools.db.shift().disconnect()
+        }
+        while (this._pools.ssh.length) {
+            this._pools.ssh.shift().disconnect()
         }
     }
     
