@@ -45,10 +45,8 @@ class MySQLDumper {
             if(!sharedConnection) await dumper.connect(options.connection)
             output = await dumper.dump(options)
         } catch (err){
-            if(callback) callback(err)
-            else {
-                console.error(err)
-            }
+            if(callback) return callback(err)
+            throw err
         }
         return output
     }
@@ -83,7 +81,9 @@ class MySQLDumper {
         
         if (ssh) {
             this.sshClient = new SSHClient();
-            cfg.stream = await this.sshClient.connect(ssh)
+            await this.sshClient.connect(ssh)
+            let port = `1${Date.now().toString().substr(-4)}` // random port
+            cfg.stream = await this.sshClient.tunnel(port, 3306)
         }
         this.connection = await mysql.createConnection(cfg)
     }
@@ -91,7 +91,7 @@ class MySQLDumper {
     async disconnect() {
         if (this.sharedConnection) return // we are not owner of the shared connection
         if (this.connection) this.connection.end()
-        if (this.sshClient) await this.sshClient.end()
+        if (this.sshClient) await this.sshClient.disconnect()
         this.connection = this.sshClient = null
     }
     

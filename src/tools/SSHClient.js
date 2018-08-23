@@ -149,12 +149,14 @@ class SSHClient {
     _connect(cfg, callback) {
         this._location = cfg.username + '@' + cfg.host
         v(`[ssh] Connecting to ${this._location} via ssh..`);
+        if(!cfg.username) throw Error('[ssh] Missing username: ' + cfg.username)
+        if(!cfg.host) throw Error('[ssh] Missing host: ' + cfg.host)
         
         this._ssh = new SSH2();
         this._ssh
             .on('ready', () => {
-                // v(`[ssh] Connected successfully: ${this._location}`);
-                callback();
+                v(`[ssh] Connected successfully to ${this._location}`);
+                callback(null, this._ssh);
             })
             .on('end', (data) => {
                 v(`[ssh] SSH connection closed: ${this._location}`);
