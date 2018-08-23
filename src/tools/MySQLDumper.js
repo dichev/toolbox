@@ -22,6 +22,7 @@ const NEW_LINE = require('os').EOL
  * @property {array<string>} includeTables = []
  * @property {object} excludeColumns = {}
  * @property {object} reorderColumns = {}
+ * @property {object} filterRows = {}
  * @property {int} maxChunkSize = 1000
  * @property {boolean} exportData = false
  * @property {boolean} exportSchema = true
@@ -99,7 +100,7 @@ class MySQLDumper {
      * @param {Options} options
      * @return {Promise<string>}
      */
-    async dump({exportSchema = true, exportData = false, sortKeys = false, maxChunkSize = 1000, dest = null, modifiers = [], excludeTables = [], includeTables = [], excludeColumns = {}, reorderColumns = {}}) {
+    async dump({exportSchema = true, exportData = false, sortKeys = false, maxChunkSize = 1000, dest = null, modifiers = [], excludeTables = [], includeTables = [], excludeColumns = {}, reorderColumns = {}, filterRows = {}}) {
         let [rows] = await this.connection.query('SELECT DATABASE() as dbname')
         let database = rows[0].dbname
         
@@ -132,7 +133,7 @@ class MySQLDumper {
         let data = []
         if(exportData){
             for (let table of tables) { // TODO: use parallelLimit
-                let d = await this._dumpData(table, excludeColumns[table], reorderColumns[table], maxChunkSize)
+                let d = await this._dumpData(table, excludeColumns[table], reorderColumns[table], filterRows[table], maxChunkSize)
                 data.push(d)
             }
     
@@ -194,7 +195,7 @@ class MySQLDumper {
         return output
     }
     
-    async _dumpData(table, exclude = [], orderBy = '', maxChunkSize = 1000){
+    async _dumpData(table, exclude = [], orderBy = '', filter = '', maxChunkSize = 1000){
         let columns = '*'
         let order = ''
         
@@ -210,7 +211,8 @@ class MySQLDumper {
             columns = '`' + columns.join('`, `') + '`'
         }
     
-        let SQL = 'SELECT ' + columns + ' FROM `' + table + '` ' + order
+        filter = filter ? `AND (${filter})` : ''
+        let SQL = `SELECT ${columns} FROM ${table} WHERE 1 ${filter} ${order}`
         
         let [results] = await this.connection.query(SQL)
         let output = this._buildInserts(results, table, maxChunkSize)
