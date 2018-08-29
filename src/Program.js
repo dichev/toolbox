@@ -1,4 +1,14 @@
 'use strict'
+/**
+ * @typedef {Object|null} Params
+ * @property {int} parallel
+ * @property {boolean} verbose
+ * @property {boolean} force
+ * @property {boolean} dryRun
+ * @property {boolean} quiet
+ * @property {boolean} announce
+ * @property {boolean} chat
+ */
 
 const Input = require('./tools/Input')
 const Shell = require('./tools/Shell')
@@ -16,6 +26,7 @@ const isWin = os.platform() === 'win32'
 class Program {
     
     constructor({chat = null } = {}) {
+        /** @type Params **/
         this.params = null
         this._description = ''
         this._usage = ''
@@ -29,6 +40,8 @@ class Program {
     
         process.on('uncaughtException', (err) => this._errorHandler(err))
         process.on('unhandledRejection', (reason) => this._errorHandler(reason))
+        
+       
     }
     
     /**
