@@ -92,6 +92,7 @@ class Program {
             .option('-f, --force', 'Suppress confirm messages (used for automation)')
             .option('-n, --dry-run', 'Dry run mode will do everything as usual except commands execution')
             .option('-q, --quiet', 'Turn off chat and some logs in stdout')
+            .option('--announce', 'Announce what and why is happening and delay the execution to give time to all to prepare')
             .option('--no-chat', 'Disable chat notification if they are activated')
     
         commander.usage(this._usage)
@@ -214,7 +215,31 @@ class Program {
     async _before(){
         if(!this.params.quiet) {
             let msg = `${this._description} (by ${os.userInfo().username})<br/><code>$ ${this.name.command} ${this.name.action} ${process.argv.slice(2).join(' ')}</code>`
-            await this.chat.notify(msg, { silent: true, popup: true })
+            let delay = 0
+            
+            if(this.params.announce) {
+                let announce = await this.ask('Announce')
+                let seconds = 0
+                let minutes = await this.ask('Delay (2min)', null, 2)
+                minutes = parseInt(minutes)
+    
+                if(announce) {
+                    msg += `<br/><br/><b>Announce:</b> ${announce}`
+                }
+                
+                if(minutes > 0)    {
+                    let now = new Date()
+                    seconds = (60 - now.getSeconds())
+                    now.setSeconds(0)
+                    now.setMinutes(now.getMinutes() + delay)
+                    msg += `<br/><b>Schedule:</b> ${now.toTimeString().substr(0, 8)} (after ${minutes} min)`
+    
+                    delay = minutes * 60 + seconds
+                }
+            }
+    
+            await this.chat.notify(msg, {silent: true, popup: true, color: 'purple'})
+            if (delay) await this.sleep(delay, 'Waiting..')
         }
     }
     
