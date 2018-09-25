@@ -66,7 +66,7 @@ class MySQL {
         if (ssh) {
             if(!password) {
                 let storedPass = await ssh.exec(`(cat .my.cnf | grep password) || echo ''`, { secret: true, allowInDryMode: true }) || ''
-                cfg.password = storedPass.replace(/password(\s?)+=/, '').trim() || ''
+                cfg.password = storedPass.replace(/password(\s?)+=(\s?)+/, '').trim().replace(/['"]/g, '') || ''
             }
             
             let port = `1${Date.now().toString().substr(-4)}` // random port

@@ -7,6 +7,7 @@ const Input = require('./Input')
 const console = require('../lib/Log')
 const fs = require('fs')
 const v = console.verbose
+const colors = require('colors/safe')
 
 class SSHClient {
     
@@ -193,18 +194,18 @@ class SSHClient {
     }
     
     /**
-     * @param {stream} process
+     * @param {stream} stream
      * @param {object} [options]
      * @param {boolean} [options.silent]
      * @param {boolean} [options.secret]
      * @param {function} callback
      * @private
      */
-    _handleStream(process, { secret = false, silent = false, trim = true }, callback) {
+    _handleStream(stream, { secret = false, silent = false, trim = true }, callback) {
         let _stdout = '';
         let _stderr = '';
         
-        process.on('close', (code) => {
+        stream.on('close', (code) => {
             let error = (code !== 0) ? new Error(_stderr || 'Error code: ' + code) : null;
             if(trim){
                 _stdout = _stdout.trim()
@@ -214,16 +215,16 @@ class SSHClient {
         });
         
         
-        process.stdout.on('data', (data) => {
+        stream.stdout.on('data', (data) => {
             let stdout = data.toString();
             _stdout += stdout;
-            if(!secret) (this._silent || silent) ? v(stdout) : console.log(stdout);
+            if(!secret) (this._silent || silent) ? v(stdout) : process.stdout.write(stdout);
         });
         
-        process.stderr.on('data', (data) => {
+        stream.stderr.on('data', (data) => {
             let stderr = data.toString();
             _stderr += stderr;
-            if(!secret) (this._silent || silent) ? v(stderr) : console.warn(stderr);
+            if(!secret) (this._silent || silent) ? v(stderr) : process.stdout.write(colors.yellow(stderr));
         });
     }
     

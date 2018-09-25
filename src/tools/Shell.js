@@ -3,6 +3,7 @@
 const console = require('../lib/Log')
 const v = console.verbose
 const spawn = require('child_process').spawn
+const colors = require('colors/safe')
 
 class Shell {
     
@@ -40,11 +41,11 @@ class Shell {
             let output = ''
             if(bash.stdout) bash.stdout.on('data', data => {
                 output += data.toString()
-                if(!silent) console.log(data.toString().trim())
+                if(!silent) process.stdout.write(data.toString())
             })
             if(bash.stderr) bash.stderr.on('data', data => {
                 output += data.toString()
-                if(!silent) console.warn(data.toString().trim())
+                if(!silent) process.stdout.write(colors.yellow(data.toString()))
             })
             bash.on('error', (err) => console.error(err));
             bash.on('close', (code) => {
