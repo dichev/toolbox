@@ -105,6 +105,7 @@ class Program {
             .option('-f, --force', 'Suppress confirm messages (used for automation)')
             .option('-n, --dry-run', 'Dry run mode will do everything as usual except commands execution')
             .option('-q, --quiet', 'Turn off chat and some logs in stdout')
+            .option('--wait <int>', 'Pause between iterations in seconds')
             .option('--announce', 'Announce what and why is happening and delay the execution to give time to all to prepare')
             .option('--no-chat', 'Disable chat notification if they are activated')
     
@@ -207,17 +208,22 @@ class Program {
                     return fn(host)
                 })
                 await Chain.parallelLimit(parallelLimit, fnPromises)
+                this.destroy() // TODO: could keep open a lot connections
             }
             else {
                 for (let host of iterations) {
                     if (!quiet && iterations.length > 1) console.info(`\n-- ${host} -----------------------------------------`)
                     if (!quiet) await this.chat.notify(`${this.name.action} | Executing on ${host}`, { silent: true })
                     await fn(host)
+                    if(this.params.wait) {
+                        if (!quiet) await this.chat.notify(`Waiting between iterations (${this.params.wait} sec)`, { silent: true })
+                        await this.sleep(this.params.wait, 'waiting')
+                    }
+                    this.destroy()
                 }
             }
     
             await this._after()
-            this.destroy()
         }
         catch (err) {
             await this._errorHandler(err)
@@ -252,7 +258,10 @@ class Program {
             }
     
             await this.chat.notify(msg, {silent: true, popup: true, color: 'purple'})
-            if (delay) await this.sleep(delay, 'Waiting..')
+            if (delay) {
+                await this.sleep(delay, 'Waiting..')
+                await this.chat.notify('Executing..', { popup: true })
+            }
         }
     }
     
