@@ -51,7 +51,46 @@ class SSHClient {
      * @param {boolean} [options.trim]
      */
     async exec(cmd, { silent = false, secret = false, allowInDryMode = false, trim = true } = {}) {
-        return promisify(this._exec.bind(this))(cmd, {silent, secret, allowInDryMode, trim})
+        return new Promise((resolve, reject) => {
+            this._exec(cmd, {silent, secret, allowInDryMode, trim}, (error, stdout, stderr) => {
+                if(error) reject(error)
+                else resolve(stdout)
+            })
+        })
+    }
+    
+    
+    /**
+     *  TODO: could be changed to ssh.exec(cmd, {screen: true})
+     *  TODO: using nohup because can't detect when screen job is finished: $ screen -dm bash -c "${cmd} >> ${LOGFILE} 2>&1"
+     * @param {string} cmd
+     * @param {object} [options]
+     * @param {boolean} [options.silent]
+     * @param {boolean} [options.secret]
+     * @param {boolean} [options.allowInDryMode]
+     * @param {boolean} [options.trim]
+     * @param {boolean} [options.remoteLogFile]
+     */
+    async execBackground(cmd, { silent = false, secret = false, allowInDryMode = false, trim = true, remoteLogFile } = {}) {
+        return new Promise((resolve, reject) => {
+            const LOGFILE = remoteLogFile || `/tmp/nohup.${Date.now()}.${(Math.round(Math.random()*100000))}.out`
+    
+            console.log(`Executing command in nohup, logging here: ${LOGFILE}`)
+            console.warn('WARNING! This command will continue exection even if script is stopped')
+            cmd = `
+                set -e
+                touch ${LOGFILE}
+                tail -f -n 0 ${LOGFILE} & tailPID=$!
+                nohup bash <<'EOF' >> ${LOGFILE} 2>&1 & wait $! && status=0 || status=1\n${cmd}\nEOF
+                kill -s TERM $tailPID
+                exit $status
+            `
+
+            this._exec(cmd, {silent, secret, allowInDryMode, trim}, (error, stdout, stderr) => {
+                if (error) reject(error)
+                else resolve(stdout)
+            })
+        })
     }
     
     
@@ -201,7 +240,7 @@ class SSHClient {
      * @param {function} callback
      * @private
      */
-    _handleStream(stream, { secret = false, silent = false, trim = true }, callback) {
+    _handleStream(stream, { secret = false, silent = false, trim = true } = {}, callback) {
         let _stdout = '';
         let _stderr = '';
         
