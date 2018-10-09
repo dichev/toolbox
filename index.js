@@ -9,6 +9,8 @@ const SSHClient = require('./src/tools/SSHClient')
 const Tester = require('./src/tools/Tester')
 const MySQL = require('./src/tools/MySQL')
 const MySQLDumper = require('./src/tools/MySQLDumper')
+const console = require('./src/lib/Log')
 
 module.exports = { Program, Input, Shell, SSHClient, Tester, MySQL, MySQLDumper }
+module.exports.lib = { console }
 module.exports.plugins = { CloudFlare, HipChat }
