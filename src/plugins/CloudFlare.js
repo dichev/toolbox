@@ -1,7 +1,7 @@
 'use strict'
 
 const fetch = require('node-fetch')
-const console = require('../lib/Log')
+const console = require('../lib/Console')
 
 const API = 'https://api.cloudflare.com/client/v4'
 

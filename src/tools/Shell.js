@@ -1,6 +1,6 @@
 'use strict'
 
-const console = require('../lib/Log')
+const console = require('../lib/Console')
 const v = console.verbose
 const spawn = require('child_process').spawn
 const colors = require('colors/safe')

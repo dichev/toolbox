@@ -12,7 +12,7 @@ const _console = {
     error: console.error
 }
 
-class Log {
+class Console {
     
     static verbose(...args){
         if (verbose) {
@@ -42,4 +42,4 @@ class Log {
     }
 }
 
-module.exports = Log
+module.exports = Console

@@ -1,7 +1,7 @@
 'use strict'
 
 const readline = require('readline')
-const console = require('../lib/Log')
+const console = require('../lib/Console')
 const v = console.verbose
 
 class Input {

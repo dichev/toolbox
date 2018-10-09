@@ -2,7 +2,7 @@
 
 const fetch = require('node-fetch')
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms))
-const console = require('../lib/Log')
+const console = require('../lib/Console')
 
 class HipChat {
     
@@ -24,7 +24,7 @@ class HipChat {
      * @param {string}  [color] - Background color: yellow, green, red, purple, gray, random
      * @param {boolean} [popup] - Whether this message should trigger a user popup notification
      * @param {string}  [format] - html or text
-     * @param {boolean} [silent] - do not ouput message in stdout
+     * @param {boolean} [silent] - do not output message in stdout
      * @param {int}     [ms] - how many sec to wait until resolve the promise
      */
     async notify(message = 'NO MESSAGE', {color = 'gray', popup = false, format = 'html', silent = false} = {}, ms = 500) {
