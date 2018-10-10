@@ -15,7 +15,7 @@ const Shell = require('./tools/Shell')
 const Tester = require('./tools/Tester')
 const MySQL = require('./tools/MySQL')
 const SSHClient = require('./tools/SSHClient')
-const console = require('./lib/Log') // TODO: rename
+const console = require('./lib/Console')
 const Pattern = require('./lib/Pattern')
 const Chain = require('./lib/Chain')
 const HipChat = require('./plugins/HipChat')
@@ -250,7 +250,7 @@ class Program {
                     let now = new Date()
                     seconds = (60 - now.getSeconds())
                     now.setSeconds(0)
-                    now.setMinutes(now.getMinutes() + delay)
+                    now.setMinutes(now.getMinutes() + minutes) // TODO what if 59 + 2
                     msg += `<br/><b>Schedule:</b> ${now.toTimeString().substr(0, 8)} (after ${minutes} min)`
     
                     delay = minutes * 60 + seconds
