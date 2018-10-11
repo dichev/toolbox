@@ -51,7 +51,7 @@ class MySQL {
      * @param {SSHClient} ssh
      * @return {MySQL}
      */
-    async connect({host, user = 'root', password = '', database = ''}, ssh = null){
+    async connect({host = '127.0.0.1', user = 'root', password = '', database = ''}, ssh = null){
         let cfg = {
             host: host,
             user: user,
