@@ -8,6 +8,7 @@ const console = require('../lib/Console')
 const fs = require('fs')
 const v = console.verbose
 const colors = require('colors/safe')
+const isWin = require('os').platform() === 'win32'
 
 class SSHClient {
     
@@ -29,7 +30,7 @@ class SSHClient {
     
     
     /**
-     * @param {object} cfg
+     * @param {object} cfg - see: https://www.npmjs.com/package/ssh2#client-methods
      */
     async connect(cfg) {
         return new Promise((resolve, reject) => {
@@ -196,6 +197,8 @@ class SSHClient {
         v(`[ssh] Connecting to ${this._location} via ssh..`);
         if(!cfg.username) throw Error('[ssh] Missing username: ' + cfg.username)
         if(!cfg.host) throw Error('[ssh] Missing host: ' + cfg.host)
+        if(!cfg.privateKey && typeof cfg.agent === 'undefined') cfg.agent = isWin ? 'pageant' : process.env.SSH_AUTH_SOCK
+        if(!cfg.privateKey && typeof cfg.agentForward === 'undefined') cfg.agentForward = true
         
         this._ssh = new SSH2();
         this._ssh

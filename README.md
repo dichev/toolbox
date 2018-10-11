@@ -50,7 +50,7 @@ program.run(async () => {
 
 ## <a name="Tools"></a>Tools
 
-##### <a name="Program"></a>Program 
+#### <a name="Program"></a>Program 
 This is the must have lib for all commands. 
 It's responsible for parsing cli arguments, generating help, running in parallel, etc.. 
 If it is used then your script will directly support following cli arguments:
@@ -148,7 +148,7 @@ program
 
 ```
 
-##### <a name="Shell"></a>Shell 
+#### <a name="Shell"></a>Shell 
 Local machine shell executor (using bash)
 ```javascript
 const Shell = require('dopamine-toolbox').Shell
@@ -165,7 +165,7 @@ await shell.exec(`
 Note the shell doesn't support any fancy functions like shell.git(), shell.find(), shell.mkdir(), etc.. by reason.
 The idea is to not abstract the standard shell commands and to let sysadmin guys to write automation in the way the know best, aka piping
 
-##### <a name="Input"></a>Input 
+#### <a name="Input"></a>Input 
 Provide async methods for user cli input
 ```javascript
 const input = require('dopamine-toolbox').Input
@@ -185,7 +185,7 @@ console.log('continue only if is confirmed')
 ```
 
 
-##### <a name="Tester"></a>Tester 
+#### <a name="Tester"></a>Tester 
 Super simple test framework without 1 million dependencies
 ```javascript
 const Tester = require('dopamine-toolbox').Tester
@@ -205,9 +205,11 @@ it(`could be skipped`, async () => {
 await tester.run(false)
 ```
 
-##### <a name="SSHClient"></a>SSHClient 
+#### <a name="SSHClient"></a>SSHClient 
 Adapter over ssh2 lib - https://github.com/mscdex/ssh2
 
+
+Basically it support async await methods and it has built in protection against "rm -rf"
 ```javascript
 const SSHClient = require('dopamine-toolbox').SSHClient
 
@@ -229,8 +231,10 @@ await ssh.exec(`rm -v ${file}`)
 await ssh.disconnect()
 ```
 
-##### <a name="MySQL"></a>MySQL 
+#### <a name="MySQL"></a>MySQL 
 Adapter over mysql2 lib: https://www.npmjs.com/package/mysql2
+
+It has built in protection agains DROP DATABASE statements and server overloading
 ```javascript
 const MySQL = require('dopamine-toolbox').MySQL
 let db = new MySQL()
@@ -247,7 +251,7 @@ console.log(rows)
 db.highLoadProtection({ connections: 100, interval: 2 })
 await db.disconnect()
 ```
-##### <a name="MySQLDumper"></a>MySQLDumper 
+#### <a name="MySQLDumper"></a>MySQLDumper 
 This is customized for our needs mysql dumper. It supports useful options for:
 - Flexible table/columns excluding
 - SSH connections
@@ -282,7 +286,7 @@ await dump({
 
 ### Plugins
 Plugins are just adapters to the API of external third party services
-##### <a name="HipChat"></a>HipChat
+#### <a name="HipChat"></a>HipChat
 
 ```javascript
 const HipChat = require('dopamine-toolbox').plugins.HipChat
@@ -293,7 +297,7 @@ await chat.notify('Hey!')
 await chat.notify('Hey again!', {color: 'green', popup: true, format: 'html', silent: false})
 ```
 
-##### <a name="CloudFlare"></a>CloudFlare
+#### <a name="CloudFlare"></a>CloudFlare
 ```javascript
 const CloudFlare = require('dopamine-toolbox').plugins.CloudFlare
 
@@ -307,7 +311,7 @@ await cf.patch(url, json)
 
 ```
 ## Lib
-##### <a name="Console"></a>Console
+#### <a name="Console"></a>Console
 This is extended version of the js console. It basically colorize it and add in addition console.verbose method
 ```javascript
 const console = require('dopamine-toolbox').lib.console
