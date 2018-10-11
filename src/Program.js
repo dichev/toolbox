@@ -272,7 +272,7 @@ class Program {
     }
     
     async confirm(question, def = 'yes', expect = ['yes', 'y']) {
-        if(this.params.force){
+        if(this.params && this.params.force){
             console.log(question, 'yes (force)')
             return
         }

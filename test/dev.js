@@ -1,30 +1,25 @@
 #!/usr/bin/env node
 'use strict';
 
-
-const Program = require('../index').Program
-const HOSTS = [
-    { name: 'dev-hermes-web1', ip: '192.168.106.32' },
-    { name: 'dev-hermes-web2', ip: '192.168.106.33' },
-]
+const Program = require('../').Program
+const HOSTS = ['dev-hermes-web1.out','dev-hermes-web2.out']
 
 let program = new Program()
 
-
 program
     .description('Testing script')
+    .option('-h, --hosts <list|all>', 'The target host names', { choices: HOSTS, required: true })
     .example(`
-        node test/dev --hosts dev-hermes-web1,dev-hermes-web2
+        node test/dev --hosts dev-hermes-web1.out,dev-hermes-web2.out
         node test/dev --hosts dev-hermes-*
         node test/dev --hosts all
     `)
-    .option('-h, --hosts <list|all>', 'The target host names', { choices: HOSTS.map(h => h.name), required: true })
-
+    
     .iterate('hosts', async (host) => {
         
         await program.shell().exec('date')
         
-        let ssh = await program.ssh(HOSTS.find(h => h.name === host).ip, 'root')
+        let ssh = await program.ssh(host, 'root')
     
         if (await ssh.exists('/opt/dopamine/sys-metrics')) {
             await ssh.chdir('/opt/dopamine/sys-metrics')
@@ -35,4 +30,3 @@ program
             console.info('Oups, there are no sys-metrics here..')
         }
     })
-

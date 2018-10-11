@@ -32,7 +32,12 @@ class SSHClient {
      * @param {object} cfg
      */
     async connect(cfg) {
-        return promisify(this._connect.bind(this))(cfg)
+        return new Promise((resolve, reject) => {
+            this._connect(cfg, (err) => {
+                if(err) reject(err)
+                else resolve()
+            })
+        })
     }
     
     disconnect() {
