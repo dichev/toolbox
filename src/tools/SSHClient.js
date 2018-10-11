@@ -10,12 +10,13 @@ const v = console.verbose
 const colors = require('colors/safe')
 const isWin = require('os').platform() === 'win32'
 
+const DRY_RUN = (process.argv.findIndex(arg => arg === '--dry-run') !== -1)
+
 class SSHClient {
     
-    constructor(dryMode = false) {
+    constructor() {
         this._ssh = null
         this._cwd = ''
-        this._dryMode = dryMode
         this._silent = false
         
         this._location = ''
@@ -53,12 +54,12 @@ class SSHClient {
      * @param {object} [options]
      * @param {boolean} [options.silent]
      * @param {boolean} [options.secret]
-     * @param {boolean} [options.allowInDryMode]
+     * @param {boolean} [options.allowInDryRun]
      * @param {boolean} [options.trim]
      */
-    async exec(cmd, { silent = false, secret = false, allowInDryMode = false, trim = true } = {}) {
+    async exec(cmd, { silent = false, secret = false, allowInDryRun = false, trim = true } = {}) {
         return new Promise((resolve, reject) => {
-            this._exec(cmd, {silent, secret, allowInDryMode, trim}, (error, stdout, stderr) => {
+            this._exec(cmd, {silent, secret, allowInDryRun, trim}, (error, stdout, stderr) => {
                 if(error) reject(error)
                 else resolve(stdout)
             })
@@ -73,11 +74,11 @@ class SSHClient {
      * @param {object} [options]
      * @param {boolean} [options.silent]
      * @param {boolean} [options.secret]
-     * @param {boolean} [options.allowInDryMode]
+     * @param {boolean} [options.allowInDryRun]
      * @param {boolean} [options.trim]
      * @param {boolean} [options.remoteLogFile]
      */
-    async execBackground(cmd, { silent = false, secret = false, allowInDryMode = false, trim = true, remoteLogFile } = {}) {
+    async execBackground(cmd, { silent = false, secret = false, allowInDryRun = false, trim = true, remoteLogFile } = {}) {
         return new Promise((resolve, reject) => {
             const LOGFILE = remoteLogFile || `/tmp/nohup.${Date.now()}.${(Math.round(Math.random()*100000))}.out`
     
@@ -92,7 +93,7 @@ class SSHClient {
                 exit $status
             `
 
-            this._exec(cmd, {silent, secret, allowInDryMode, trim}, (error, stdout, stderr) => {
+            this._exec(cmd, {silent, secret, allowInDryRun, trim}, (error, stdout, stderr) => {
                 if (error) reject(error)
                 else resolve(stdout)
             })
@@ -104,7 +105,7 @@ class SSHClient {
      * @param {string} dir
      */
     async chdir(dir) {
-        this._cwd = await this.exec(`cd ${dir} && pwd`, { silent: true, allowInDryMode: true })
+        this._cwd = await this.exec(`cd ${dir} && pwd`, { silent: true, allowInDryRun: true })
     }
     
     /**
@@ -112,7 +113,7 @@ class SSHClient {
      * @return {boolean}
      */
     async exists(path) {
-        let exists = await this.exec(`[ -e ${path} ] && echo EXISTS || echo NOT_EXISTS`, { silent: true, allowInDryMode: true })
+        let exists = await this.exec(`[ -e ${path} ] && echo EXISTS || echo NOT_EXISTS`, { silent: true, allowInDryRun: true })
         return exists === 'EXISTS'
     }
     
@@ -222,11 +223,11 @@ class SSHClient {
      * @param {object} [options]
      * @param {boolean} [options.silent]
      * @param {boolean} [options.secret]
-     * @param {boolean} [options.allowInDryMode]
+     * @param {boolean} [options.allowInDryRun]
      * @param {function} callback
      */
     _exec(cmd, options = {}, callback) {
-        let isDryMode = this._dryMode && !options.allowInDryMode
+        let isDryMode = DRY_RUN && !options.allowInDryRun
         if (!options.secret) v(`${isDryMode?'DRY RUN | ':''}${this._location}:${this._cwd}$`, cmd);
         if (!this._ssh) throw Error('Can not .exec commands before SSH is connected!')
         if (this._cwd) cmd = `cd ${this._cwd} && ` + cmd

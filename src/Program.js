@@ -32,7 +32,7 @@ class Program {
         this._usage = ''
         this._exampleUsage = ''
         this._pools = { ssh: [], db: []}
-        this._dryMode = false
+        this._dryRun = false
         this._requiredFlags = []
         this.isRun = false
         
@@ -103,8 +103,8 @@ class Program {
             // .option('-i, --interactive', 'Turn ON the interactive mode')
             .option('-v, --verbose', 'Turn ON log details of whats happening')
             .option('-f, --force', 'Suppress confirm messages (used for automation)')
-            .option('-n, --dry-run', 'Dry run mode will do everything as usual except commands execution')
-            .option('-q, --quiet', 'Turn off chat and some logs in stdout')
+            .option('--dry-run', 'Dry run mode will do everything as usual except commands execution')
+            .option('--quiet', 'Turn off chat and some logs in stdout')
             .option('--wait <int>', 'Pause between iterations in seconds')
             .option('--announce', 'Announce what and why is happening and delay the execution to give time to all to prepare')
             .option('--no-chat', 'Disable chat notification if they are activated')
@@ -131,7 +131,7 @@ class Program {
         this.params = commander.opts()
         if (commander.dryRun) {
             console.info('============== DRY RUN =============')
-            this._dryMode = true
+            this._dryRun = true
         }
     
         for (let flags of this._requiredFlags) {
@@ -290,7 +290,7 @@ class Program {
      * @return {Promise<SSHClient>|null}
      */
     async ssh(host, user, cmd = ''){
-        let ssh = new SSHClient(this._dryMode)
+        let ssh = new SSHClient()
         await ssh.connect({
             host: host,
             username: user,
@@ -320,7 +320,7 @@ class Program {
      * @return {Promise<MySQL>}
      */
     async mysql(cfg = {}) {
-        let db = new MySQL(this._dryMode)
+        let db = new MySQL()
         let ssh = null
         if(cfg.ssh) {
             if(cfg.ssh instanceof SSHClient) ssh = cfg.ssh

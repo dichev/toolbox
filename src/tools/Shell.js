@@ -26,9 +26,9 @@ class Shell {
      * @param {object} [options]
      * @param {boolean} [options.silent]
      * @param {boolean} [options.secret]
-     * @param {boolean} [options.allowInDryMode]
+     * @param {boolean} [options.allowInDryRun]
      */
-    async exec(cmd, {silent = false, secret = false, allowInDryMode = false} = {}) {
+    async exec(cmd, {silent = false, secret = false, allowInDryRun = false} = {}) {
         if (this._cwd) cmd = `cd ${this._cwd} && ` + cmd
         v(this._cwd)
         

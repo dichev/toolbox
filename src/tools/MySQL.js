@@ -14,13 +14,14 @@ const sqlTrim = (sql) => {
     return sql
 }
 
+const DRY_RUN = (process.argv.findIndex(arg => arg === '--dry-run') !== -1)
+
 class MySQL {
     
-    constructor(dryMode = false) { // TODO: dryMode
+    constructor() {
         /** @type PromiseConnection **/
         this._db = null
         this._ssh = null
-        this._dryMode = dryMode
         this._dbName = null
         
         this._thresholds = {
@@ -65,7 +66,7 @@ class MySQL {
     
         if (ssh) {
             if(!password) {
-                let storedPass = await ssh.exec(`(cat .my.cnf | grep password) || echo ''`, { secret: true, allowInDryMode: true }) || ''
+                let storedPass = await ssh.exec(`(cat .my.cnf | grep password) || echo ''`, { secret: true, allowInDryRun: true }) || ''
                 cfg.password = storedPass.replace(/password(\s?)+=(\s?)+/, '').trim().replace(/['"]/g, '') || ''
             }
             
@@ -88,9 +89,9 @@ class MySQL {
     
     // TODO: implement --show-warnings
     async query(SQL, params){
-        v(`${this._dryMode?'DRY RUN | ':''}[mysql]\n${sqlTrim(SQL)}\n[${params||''}]`)
+        v(`${DRY_RUN?'DRY RUN | ':''}[mysql]\n${sqlTrim(SQL)}\n[${params||''}]`)
         await this._protect(SQL)
-        if(this._dryMode) return []
+        if(DRY_RUN) return []
         
         if(this._thresholds.enabled) await this._waitOnHighLoad()
         
