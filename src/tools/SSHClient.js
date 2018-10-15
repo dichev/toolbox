@@ -37,7 +37,7 @@ class SSHClient {
         return new Promise((resolve, reject) => {
             this._connect(cfg, (err) => {
                 if(err) reject(err)
-                else resolve()
+                else resolve(this)
             })
         })
     }
@@ -47,6 +47,7 @@ class SSHClient {
             this._ssh.end()
             this._ssh = null
         }
+        return this
     }
     
     /**

@@ -83,8 +83,10 @@ class MySQL {
     
     async disconnect(){
         if (this._db) this._db.end()
+        v(`[mysql] disconnected`)
         if (this._ssh) await this._ssh.disconnect()
         this._db = this._ssh = null
+        return this
     }
     
     // TODO: implement --show-warnings
@@ -103,6 +105,32 @@ class MySQL {
     async dump({exportSchema = true, exportData = false, sortKeys = false, maxChunkSize = 1000, dest = null, modifiers = [], excludeTables = [], includeTables = [], excludeColumns = {}, reorderColumns = {}}){
         let dumper = new MySQLDumper(this.getConnection())
         return await dumper.dump({exportSchema, exportData, sortKeys, maxChunkSize, dest, modifiers, excludeTables, includeTables, excludeColumns, reorderColumns})
+    }
+    
+    /**
+     * Convert keys of object to mysql insert field list (aka INSERT INTO table (key1, key2)
+     * @param {Object|Array<Object>} row
+     * @return {string} - like "key1, key2"
+     */
+    toKeys(row){
+        if(Array.isArray(row)) {
+            row = row[0]
+        }
+        
+        return Object.keys(row).join(', ')
+    }
+    
+    /**
+     * Convert values of object or array of objects in mysql insert values (aka INSERT ... VALUES (val11, val12), (val21, val22)
+     * @param {Object|Array<Object>} rows
+     * @return {Array<Array>}
+     */
+    toValues(rows){
+        if(typeof rows === 'object' && !Array.isArray(rows)) {
+            rows = [rows]
+        }
+        
+        return [rows.map(row => Object.keys(row).map(key => row[key]))]
     }
     
     highLoadProtection({ enabled = true, connections = 300, interval = 2 }){
