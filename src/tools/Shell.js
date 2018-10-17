@@ -5,6 +5,8 @@ const v = console.verbose
 const spawn = require('child_process').spawn
 const colors = require('colors/safe')
 
+const DRY_RUN = (process.argv.findIndex(arg => arg === '--dry-run') !== -1)
+
 class Shell {
     
     constructor() {
@@ -28,11 +30,10 @@ class Shell {
      * @param {boolean} [options.allowInDryRun]
      */
     async exec(cmd, {silent = false, allowInDryRun = false} = {}) {
+        let isDryMode = DRY_RUN && !allowInDryRun
         if (this._cwd) cmd = `cd ${this._cwd} && ` + cmd
-        v(this._cwd)
-        
-        // TODO: dry mode
-        // return new Promise((resolve, reject) => setTimeout(resolve, 1000)).then(() => 'dry-mode')
+        v((isDryMode ? 'DRY RUN | ' : '') + this._cwd + '$' + cmd)
+        if (isDryMode) return
         
         return new Promise((resolve, reject) => {
             let output = ''
