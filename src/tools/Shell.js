@@ -25,10 +25,9 @@ class Shell {
      * @param {string} cmd
      * @param {object} [options]
      * @param {boolean} [options.silent]
-     * @param {boolean} [options.secret]
      * @param {boolean} [options.allowInDryRun]
      */
-    async exec(cmd, {silent = false, secret = false, allowInDryRun = false} = {}) {
+    async exec(cmd, {silent = false, allowInDryRun = false} = {}) {
         if (this._cwd) cmd = `cd ${this._cwd} && ` + cmd
         v(this._cwd)
         
@@ -36,16 +35,18 @@ class Shell {
         // return new Promise((resolve, reject) => setTimeout(resolve, 1000)).then(() => 'dry-mode')
         
         return new Promise((resolve, reject) => {
-            let bash = spawn('bash', ['-c', cmd]); // , { stdio: [process.stdin, 'pipe', 'pipe']} <- this totally breaks shell colors
-    
             let output = ''
-            if(bash.stdout) bash.stdout.on('data', data => {
-                output += data.toString()
-                if(!silent) process.stdout.write(data.toString())
+            let bash = spawn('bash', ['-c', cmd], {stdio: ['inherit', 'pipe', 'pipe']}) // Known-issue: with inherit, the terminal colors in Windows MinGW (mintty) will be broken and displayed as ANSI codes
+            bash.stdout.setEncoding('utf8')
+            bash.stderr.setEncoding('utf8')
+            
+            bash.stdout.on('data', data => {
+                output += data
+                if(!silent) process.stdout.write(data)
             })
-            if(bash.stderr) bash.stderr.on('data', data => {
-                output += data.toString()
-                if(!silent) process.stdout.write(colors.yellow(data.toString()))
+            bash.stderr.on('data', data => {
+                output += data
+                if(!silent) process.stdout.write(colors.yellow(data))
             })
             bash.on('error', (err) => console.error(err));
             bash.on('close', (code) => {
@@ -55,9 +56,7 @@ class Shell {
                     reject('Error code: ' + code)
                 }
                 
-            });
-            // bash.stdin.write(cmd + '\n')
-            // bash.stdin.end()
+            })
         })
     }
     

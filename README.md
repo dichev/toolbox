@@ -18,6 +18,7 @@ The additional options of each tool is (partially) documented only inside their 
     * **[Cloudflare](#Cloudflare)**
 * **[Lib](#Lib)**
     * **[Console](#Console)**
+* **[Known Issues](#Known Issues)**
 
 ## Usage
 
@@ -284,7 +285,7 @@ await dump({
 })
 ```
 
-### Plugins
+### <a name="Plugins"></a>
 Plugins are just adapters to the API of external third party services
 #### <a name="HipChat"></a>HipChat
 
@@ -310,7 +311,7 @@ await cf.delete(url, json)
 await cf.patch(url, json)
 
 ```
-## Lib
+## <a name="Lib"></a>Lib
 #### <a name="Console"></a>Console
 This is extended version of the js console. It basically colorize it and add in addition console.verbose method
 ```javascript
@@ -328,40 +329,11 @@ require('dopamine-toolbox').lib.console.upgrade()
 ```
 
 
+## <a name="Known Issues"></a>Known Issues
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- Some colors in shell are displayed as ANSI codes in Windows MinGW64 (mintty)
+```bash
+?[32m hey, I am green ?[39m
+```
+This happens when child process have colors and it's stdio is attached to the parent process. It seems to be limititation of the terminal emulator, so the best way to fix it is to switch to [ConEmu](https://conemu.github.io/)
 
