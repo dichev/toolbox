@@ -55,11 +55,12 @@ class HipChat {
         try {
             const response = await fetch(this._urlToken, options)
             if (!response.ok) throw Error('Wrong status code: ' + response.status)
-            const result = await response.text() // it's empty
+            result = await response.text() // it's empty
         }
         catch (err) {
             result = err.error ? err.error : {success: false, msg: err.toString()}
-            console.error(result)
+            console.verbose('[hip chat]', options)
+            console.error('[hip chat]', result)
         }
 
         return result

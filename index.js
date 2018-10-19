@@ -3,6 +3,7 @@
 const Program = require('./src/Program')
 const CloudFlare = require('./src/plugins/CloudFlare')
 const HipChat = require('./src/plugins/HipChat')
+const GoogleChat = require('./src/plugins/GoogleChat')
 const Input = require('./src/tools/Input')
 const Shell = require('./src/tools/Shell')
 const SSHClient = require('./src/tools/SSHClient')
@@ -13,4 +14,4 @@ const console = require('./src/lib/Console')
 
 module.exports = { Program, Input, Shell, SSHClient, Tester, MySQL, MySQLDumper }
 module.exports.lib = { console }
-module.exports.plugins = { CloudFlare, HipChat }
+module.exports.plugins = { CloudFlare, HipChat, GoogleChat }
