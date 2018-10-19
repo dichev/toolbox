@@ -18,17 +18,20 @@ const SSHClient = require('./tools/SSHClient')
 const console = require('./lib/Console')
 const Pattern = require('./lib/Pattern')
 const Chain = require('./lib/Chain')
-const HipChat = require('./plugins/HipChat')
+const Chat = require('./plugins/GoogleChat')
 const commander = require('commander')
 const os = require('os')
 const isWin = os.platform() === 'win32'
+const titleCase = (str) => str.replace(/\b\S/g, t => t.toUpperCase())
 
 class Program {
     
     constructor({chat = null } = {}) {
+ 
         /** @type Params **/
         this.params = null
         this._description = ''
+        this._icon = ''
         this._usage = ''
         this._exampleUsage = ''
         this._pools = { ssh: [], db: []}
@@ -36,12 +39,20 @@ class Program {
         this._requiredFlags = []
         this.isRun = false
         
-        this.chat = new HipChat(chat)
+        /** @var GoogleChat **/
+        this.chat = new Chat(chat)
     
         process.on('uncaughtException', (err) => this._errorHandler(err))
         process.on('unhandledRejection', (reason) => this._errorHandler(reason))
-        
-       
+    }
+    
+    /**
+     * @param {string} url
+     * @return {Program}
+     */
+    icon(url){
+        this._icon = Chat.icons.DEPLOY
+        return this
     }
     
     /**
@@ -204,7 +215,7 @@ class Program {
             if(parallel){
                 if (!quiet) console.info(`\n-- Running in parallel(${parallelLimit}): ${iterations} -----------------------------------------`)
                 let fnPromises = iterations.map(host => async () => {
-                    if (!quiet) await this.chat.notify(`${this.name.action} | Executing on ${host}`, { silent: true })
+                    if (!quiet) await this.chat.message(`*Executing on ${host}*`, { silent: true })
                     return fn(host)
                 })
                 await Chain.parallelLimit(parallelLimit, fnPromises)
@@ -213,10 +224,10 @@ class Program {
             else {
                 for (let host of iterations) {
                     if (!quiet && iterations.length > 1) console.info(`\n-- ${host} -----------------------------------------`)
-                    if (!quiet) await this.chat.notify(`${this.name.action} | Executing on ${host}`, { silent: true })
+                    if (!quiet) await this.chat.message(`*Executing on ${host}*`, { silent: true })
                     await fn(host)
-                    if(this.params.wait) {
-                        if (!quiet) await this.chat.notify(`Waiting between iterations (${this.params.wait} sec)`, { silent: true })
+                    if(this.params.wait && iterations.length > 1) {
+                        if (!quiet) await this.chat.message(`Waiting between iterations (${this.params.wait} sec)`, { silent: true })
                         await this.sleep(this.params.wait, 'waiting')
                     }
                     this.destroy()
@@ -233,41 +244,82 @@ class Program {
     
     async _before(){
         if(!this.params.quiet) {
-            let msg = `${this._description} (by ${os.userInfo().username})<br/><code>$ ${this.name.command} ${this.name.action} ${process.argv.slice(2).join(' ')}</code>`
+            let parts = process.argv[1].replace(/\\/g, '/').split('/')
+            let file = parts.slice(parts.length - 3).join('/')
+            if(!file.endsWith('.js')) file+= '.js'
+            
+            let link = this.getCommandSourceCodeUrl()
+            let code = `$ ${this.name.command} ${this.name.action} ${process.argv.slice(2).join(' ')}`
             let delay = 0
+            let msg = ''
+            
+            if(this._description){
+                this.msg = this._description + '<br/><br/>'
+            }
             
             if(this.params.announce) {
                 let announce = await this.ask('Announce')
+                if (announce) {
+                    msg += `<b>Announce:</b> ${announce}<br/>`
+                }
+            }
+            // TODO: may be use handlebars templates
+            for(let [key, val] of Object.entries(this.params)){
+                if(!val && val !== 0) continue
+                if(['verbose', 'quiet', 'chat', 'announce'].includes(key)) continue
+                if(key === 'parallel') {
+                    val = val === 0 ? 'true' : val + ' at same time'
+                } else if (key === 'wait'){
+                    val = `${val}s between iterations`
+                }
+                msg += `<b>${titleCase(key)}:</b> `
+                if(typeof val === 'string' && val.includes(',')){
+                    msg += `<br/>` + val.split(',').map((name, i) => `• ${name}`).join('<br/>') + '<br/>'
+                } else {
+                    msg += `${val}<br/>`
+                }
+            }
+            
+    
+            if (this.params.announce) {
                 let seconds = 0
                 let minutes = await this.ask('Delay (2min)', null, 2)
                 minutes = parseInt(minutes)
     
-                if(announce) {
-                    msg += `<br/><br/><b>Announce:</b> ${announce}`
-                }
-                
                 if(minutes > 0)    {
                     let now = new Date()
                     seconds = (60 - now.getSeconds())
                     now.setSeconds(0)
                     now.setMinutes(now.getMinutes() + minutes) // TODO what if 59 + 2
-                    msg += `<br/><b>Schedule:</b> ${now.toTimeString().substr(0, 8)} (after ${minutes} min)`
-    
+                    msg += `<b>Schedule:</b> ${now.toTimeString().substr(0, 8)} (after ${minutes} min)<br/>`
                     delay = minutes * 60 + seconds
                 }
             }
-    
-            await this.chat.notify(msg, {silent: true, popup: true, color: 'purple'})
+            
+            
+            // await this.chat.message('```'+ code+'```')
+            await this.chat.message('`' + code + '`' + (link ? ` <${link}|see code>` : ''), { silent: true })
+            await this.chat.announce(msg, {
+                title: titleCase(this.name.command + ' ' + this.name.action) + ' ' + (this.params.rev || this.params.tag || this.params.version || ''),
+                subtitle: 'by ' + os.userInfo().username,
+                silent: true,
+                popup: true,
+                bold: false,
+                icon: this._icon || Chat.icons.GEAR,
+                // buttons: [{ text: 'see code', url: link }]
+            })
+            
             if (delay) {
                 await this.sleep(delay, 'Waiting..')
-                await this.chat.notify('Executing..', { popup: true })
+                await this.chat.message('Executing..', { popup: true })
             }
         }
     }
     
+    
     async _after(){
         if(!this.params.quiet) {
-            await this.chat.notify(`${this.name.action} | Finished!`, {color: 'green', silent: true })
+            await this.chat.message(`✓ Finished!`, {color: 'green', silent: true })
         }
     }
     
@@ -284,6 +336,7 @@ class Program {
     }
     
     /**
+     * @deprecated
      * @param {string} host
      * @param {string} user
      * @param {string} [cmd]
@@ -316,6 +369,7 @@ class Program {
     }
     
     /**
+     * @deprecated
      * @param {object} cfg
      * @return {Promise<MySQL>}
      */
@@ -332,6 +386,7 @@ class Program {
     }
    
     /**
+     * @deprecated
      * @return Shell
      */
     shell(){
@@ -339,6 +394,7 @@ class Program {
     }
     
     /**
+     * @deprecated
      * @param {string} [prefix] - used when run in parallel mode
      * @return {Tester}
      */
@@ -373,6 +429,23 @@ class Program {
         return {command,action}
     }
     
+    getCommandSourceCodeUrl(){
+        let gitlabUrl = ''
+        try {
+            gitlabUrl = require(process.cwd() + '/package.json').repository.url
+        } catch (err) {
+            // well it can't work always, but that's fine ;)
+            console.verbose('[expected] Attempted to find the command repository url, but failed:', err)
+            return
+        }
+    
+        let parts = process.argv[1].replace(/\\/g, '/').split('/')
+        let file = parts.slice(parts.length - 3).join('/')
+        if (!file.endsWith('.js')) file += '.js'
+    
+        return gitlabUrl.replace(/.git$/, '/blob/master/' + file)
+    }
+    
     
     /**
      * @param {Error} err
@@ -385,7 +458,7 @@ class Program {
         
         if(this.isRun) {
             this.destroy()
-            this.chat.notify(`${this.name.action} | Aborting due error: <br/> ${msg.replace(/\n/g, '<br/>')}`, {color: 'red', silent: true, popup: true}).catch(console.error)
+            this.chat.error(`${this.name.action} | Aborting due error', ${msg.replace(/\n/g, '<br/>')}`, {silent: true, popup: true}).catch(console.error)
             setTimeout(() => process.exit(1), 500)
         } else {
             console.log('Please see --help')

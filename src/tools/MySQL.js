@@ -133,6 +133,20 @@ class MySQL {
         return [rows.map(row => Object.keys(row).map(key => row[key]))]
     }
     
+    /**
+     * @param {string} query
+     * @param {Array} params
+     * @return {string}
+     */
+    trace(query, params) {
+        for (let p of params) {
+            query = query.replace('?', p === null ? 'NULL' : `'${p}'`)
+        }
+        console.log(query)
+        return query
+    }
+    
+    
     highLoadProtection({ enabled = true, connections = 300, interval = 2 }){
         if(enabled) console.info(`[mysql] High load protection activated (limit ${connections} connections)`)
         this._thresholds.enabled = enabled
