@@ -4,3 +4,4 @@ logs/*.log
 dev/
 test/tmp
 docs/
+icons/

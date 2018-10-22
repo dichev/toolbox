@@ -14,6 +14,7 @@ The additional options of each tool is (partially) documented only inside their 
     * **[MySQL](#MySQL)**
     * **[MySQLDumper](#MySQLDumper)**
 * **[Plugins](#Plugins)**
+    * **[GoogleChat](#GoogleChat)**
     * **[HipChat](#HipChat)**
     * **[Cloudflare](#Cloudflare)**
 * **[Lib](#Lib)**
@@ -287,6 +288,30 @@ await dump({
 
 ### <a name="Plugins"></a>
 Plugins are just adapters to the API of external third party services
+#### <a name="GoogleChat"></a>GoogleChat
+
+```javascript
+const GoogleChat = require('dopamine-toolbox').plugins.GoogleChat
+
+// you can get the urlToken from Google Chat app -> Configure webhooks 
+let urlToken = 'https://chat.googleapis.com/v1/spaces/{SPACE}/messages?key={KEY}&token={TOKEN}'
+
+let chat = new GoogleChat(urlToken, 'SomeThread')
+
+await chat.message('Some message with simple *md formatting*')
+await chat.error('Fatal Error!', `Missing required configuration or something`)
+await chat.warn('Aborting', `This env is used already on live, so for security reasons the command is disabled for it`)
+await chat.announce('Release bundle is ready for deploy', {
+    title: 'r3.10.5.1',
+    icon: GoogleChat.icons.PACKAGE,
+    bold: false,
+    buttons: [{
+        "text": "Change Log",
+        "url": "https://example.com/CHANGELOG"
+    }]
+})
+await chat.json({ text: 'anything' }) // you can pass here any raw json from google chat docs 
+```
 #### <a name="HipChat"></a>HipChat
 
 ```javascript
