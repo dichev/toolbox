@@ -40,7 +40,7 @@ class Program {
         this.isRun = false
         
         /** @var GoogleChat **/
-        this.chat = new Chat(chat)
+        this.chat = new Chat(chat, this.name.command, false)
     
         process.on('uncaughtException', (err) => this._errorHandler(err))
         process.on('unhandledRejection', (reason) => this._errorHandler(reason))
@@ -97,9 +97,17 @@ class Program {
 
         commander.option(flags, description, (val) => {
             if (!choices || !Array.isArray(choices) || !choices.length) return val
-            if (val === 'all') return choices.join(',')
-            let values = val.includes(',') ? val.split(',') : [val]
+            let values = val.split(',')
+            
+            if(values.includes('all')) {
+                values = [].concat(choices).concat(values.filter(v => v !== 'all'))
+            }
+            let excluded = values.filter(v => v.startsWith('-')).map(v => v.substr(1))
+            if(excluded.length) {
+                values = values.filter(v => !v.startsWith('-') && !excluded.includes(v))
+            }
             val = Pattern.intersect(values, choices, true).join(',')
+            
             return val
         }, def)
         
@@ -254,7 +262,7 @@ class Program {
             let msg = ''
             
             if(this._description){
-                this.msg = this._description + '<br/><br/>'
+                msg += this._description + '<br/><br/>'
             }
             
             if(this.params.announce) {
@@ -458,8 +466,8 @@ class Program {
         
         if(this.isRun) {
             this.destroy()
-            this.chat.error(`${this.name.action} | Aborting due error', ${msg.replace(/\n/g, '<br/>')}`, {silent: true, popup: true}).catch(console.error)
-            setTimeout(() => process.exit(1), 500)
+            this.chat.error(`${this.name.action} | Aborting due error`, `${msg.replace(/\n/g, '<br/>')}`, {silent: true, popup: true}).catch(console.error)
+            setTimeout(() => process.exit(1), 1500)
         } else {
             console.log('Please see --help')
             process.exit(1)

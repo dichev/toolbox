@@ -31,7 +31,7 @@ class HipChat {
         if(!silent) console.info(message)
         if(!this._enabled) return
         // Do not wait response to avoid execution blocking by the HipChat http request
-        this.notifyWait(message, { color, popup, format }).then().catch(err => console)
+        this.notifyWait(message, { color, popup, format }).then().catch(err => console.error)
         await delay(ms)
     }
     

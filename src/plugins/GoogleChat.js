@@ -18,12 +18,19 @@ class GoogleChat {
     /**
      * @param {string} urlToken
      * @param {string|function} threadKey
+     * @param {boolean} [waitResponse] - When is set to false the response/error from google chat will be not awaited.
+     *                                   This is useful to avoid script failure due chat notification failure
+     *                                   Note if is set to true, there will be still minimal delay just to keep the order of consequent chat messages
      */
-    constructor(urlToken, threadKey = 'default') {
+    constructor(urlToken, threadKey = 'default', waitResponse = true) {
         this.thread = threadKey
         this._urlToken = urlToken
         this.enabled = !!urlToken
+        this.waitResponse = waitResponse
+        this._minDelay = 500
     }
+    
+    
     /**
      * @deprecated
      */
@@ -106,6 +113,18 @@ class GoogleChat {
     }
     
     async _send(json){
+        if(this.waitResponse){
+            return await this._request(json)
+        }
+        else {
+            await Promise.race([
+                this._request(json),
+                delay(this._minDelay)
+            ]).catch(console.error)
+        }
+    }
+    
+    async _request(json){
         if (!this.enabled) return
         
         let options = {
@@ -128,14 +147,13 @@ class GoogleChat {
             // console.verbose(result)
         }
         catch (err) {
-            result = result.error ? result.error : {success: false, msg: err.toString()}
-            console.verbose('[google chat]', json)
+            result = result && result.error ? result.error : {success: false, msg: err.toString()}
+            console.verbose('[google chat]', options)
             console.error('[google chat]', result)
         }
         
         return result
     }
-    
     
 }
 

@@ -42,4 +42,10 @@ class Console {
     }
 }
 
+// just map all other console functions for compatibility
+Object.keys(console)
+      .filter(key => typeof console[key] === 'function' && !Console[key])
+      .forEach(key => Console[key] = console[key].bind(console))
+
+
 module.exports = Console

@@ -296,7 +296,7 @@ const GoogleChat = require('dopamine-toolbox').plugins.GoogleChat
 // you can get the urlToken from Google Chat app -> Configure webhooks 
 let urlToken = 'https://chat.googleapis.com/v1/spaces/{SPACE}/messages?key={KEY}&token={TOKEN}'
 
-let chat = new GoogleChat(urlToken, 'SomeThread')
+let chat = new GoogleChat(urlToken, 'SomeThread', true)
 
 await chat.message('Some message with simple *md formatting*')
 await chat.error('Fatal Error!', `Missing required configuration or something`)
