@@ -37,6 +37,7 @@ class Shell {
         
         return new Promise((resolve, reject) => {
             let output = ''
+            let stderr = ''
             let bash = spawn('bash', ['-c', cmd], {stdio: ['inherit', 'pipe', 'pipe']}) // Known-issue: with inherit, the terminal colors in Windows MinGW (mintty) will be broken and displayed as ANSI codes
             bash.stdout.setEncoding('utf8')
             bash.stderr.setEncoding('utf8')
@@ -47,6 +48,7 @@ class Shell {
             })
             bash.stderr.on('data', data => {
                 output += data
+                stderr += data
                 if(!silent) process.stdout.write(colors.yellow(data))
             })
             bash.on('error', (err) => console.error(err));
@@ -54,7 +56,7 @@ class Shell {
                 if(code === 0){
                     resolve(output.trim())
                 } else {
-                    reject('Error code: ' + code)
+                    reject(stderr.trim() || 'Exit with code: ' + code)
                 }
                 
             })

@@ -60,9 +60,9 @@ class SSHClient {
      */
     async exec(cmd, { silent = false, secret = false, allowInDryRun = false, trim = true } = {}) {
         return new Promise((resolve, reject) => {
-            this._exec(cmd, {silent, secret, allowInDryRun, trim}, (error, stdout, stderr) => {
+            this._exec(cmd, {silent, secret, allowInDryRun, trim}, (error, output) => {
                 if(error) reject(error)
-                else resolve(stdout)
+                else resolve(output)
             })
         })
     }
@@ -94,9 +94,9 @@ class SSHClient {
                 exit $status
             `
 
-            this._exec(cmd, {silent, secret, allowInDryRun, trim}, (error, stdout, stderr) => {
+            this._exec(cmd, {silent, secret, allowInDryRun, trim}, (error, output) => {
                 if (error) reject(error)
-                else resolve(stdout)
+                else resolve(output)
             })
         })
     }
@@ -251,30 +251,29 @@ class SSHClient {
      * @private
      */
     _handleStream(stream, { secret = false, silent = false, trim = true } = {}, callback) {
-        let _stdout = '';
-        let _stderr = '';
+        let stderr = '';
+        let output = '';
         
+        stream.stdout.setEncoding('utf8')
+        stream.stderr.setEncoding('utf8')
+        
+        stream.stdout.on('data', data => {
+            output += data
+            if(!secret) (this._silent || silent) ? v(data) : process.stdout.write(data)
+        })
+        
+        stream.stderr.on('data', data => {
+            output += data
+            stderr += data
+            if(!secret) (this._silent || silent) ? v(data) : process.stdout.write(colors.yellow(data))
+        })
+    
         stream.on('close', (code) => {
-            let error = (code !== 0) ? new Error(_stderr || 'Error code: ' + code) : null;
-            if(trim){
-                _stdout = _stdout.trim()
-                _stderr = _stderr.trim()
+            if (code !== 0) {
+                new Error(stderr.trim() || 'Error code: ' + code)
             }
-            callback(error, _stdout, _stderr);
-        });
-        
-        
-        stream.stdout.on('data', (data) => {
-            let stdout = data.toString();
-            _stdout += stdout;
-            if(!secret) (this._silent || silent) ? v(stdout) : process.stdout.write(stdout);
-        });
-        
-        stream.stderr.on('data', (data) => {
-            let stderr = data.toString();
-            _stderr += stderr;
-            if(!secret) (this._silent || silent) ? v(stderr) : process.stdout.write(colors.yellow(stderr));
-        });
+            callback(null, trim ? output.trim() : output)
+        })
     }
     
     
