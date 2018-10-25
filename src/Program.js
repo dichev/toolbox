@@ -430,7 +430,7 @@ class Program {
     
     
     sleep(sec = 1, msg = '') {
-        if (msg) console.info(msg, `(${sec}sec)`)
+        if (msg) console.info(msg, `(${sec}s)`)
         return new Promise((resolve) => setTimeout(resolve, sec * 1000))
     }
     
