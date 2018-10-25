@@ -4,12 +4,23 @@
 ;(async () => {
     
     {
-        const input = require('../').Input
+        const Input = require('../').Input
 
+        let input = new Input()
         let answer = await input.ask('Choose color', ['yellow', 'blue', 'green'], 'green')
         await input.confirm('Are you sure you want to continue?')
         console.log('continue only if is confirmed')
+    }
+    
+    {
+        const Input = require('../').Input
 
+        let input = new Input({collectHistoryFile: __dirname + '/.history'})
+        await input.ask('Type any command')
+        console.log('doing some work..')
+        await input.ask('Type another command')
+        console.log('doing some work..')
+        await input.ask('Press <up> and <down> to see the previous commands')
     }
 
     {

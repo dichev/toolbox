@@ -50,7 +50,7 @@ class MySQL {
      * @param {string} password
      * @param {string} database
      * @param {SSHClient} ssh
-     * @return {MySQL}
+     * @return {Promise<MySQL>}
      */
     async connect({host = '127.0.0.1', user = 'root', password = '', database = ''}, ssh = null){
         let cfg = {
@@ -81,6 +81,9 @@ class MySQL {
         return this
     }
     
+    /**
+     * @return {Promise<MySQL>}
+     */
     async disconnect(){
         if (this._db) this._db.end()
         v(`[mysql] disconnected`)
@@ -181,7 +184,7 @@ class MySQL {
             console.info(SQL)
             console.warn('Are you sure you know what are you doing?')
             
-            let answer = await Input.ask(`Please type 'approved' to proceed`, ['approved', 'no'], 'no')
+            let answer = await new Input().ask(`Please type 'approved' to proceed`, ['approved', 'no'], 'no')
             if(answer !== 'approved'){
                 throw Error('The operation is not approved. Aborting..')
             }

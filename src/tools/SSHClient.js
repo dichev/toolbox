@@ -32,6 +32,7 @@ class SSHClient {
     
     /**
      * @param {object} cfg - see: https://www.npmjs.com/package/ssh2#client-methods
+     * @return {Promise<SSHClient>}
      */
     async connect(cfg) {
         return new Promise((resolve, reject) => {
@@ -42,7 +43,10 @@ class SSHClient {
         })
     }
     
-    disconnect() {
+    /**
+     * @return {Promise<SSHClient>}
+     */
+    async disconnect() {
         if (this._ssh) {
             this._ssh.end()
             this._ssh = null
@@ -285,7 +289,7 @@ class SSHClient {
             console.warn('WARNING! Found risky shell commands:')
             console.info(cmd)
             console.warn('Are you sure you know what are you doing?')
-            let answer = await Input.ask(`Please type 'approved' to proceed`, ['approved', 'no'], 'no')
+            let answer = await new Input().ask(`Please type 'approved' to proceed`, ['approved', 'no'], 'no')
             if (answer !== 'approved') {
                 throw Error('The operation is not approved. Aborting..')
             }

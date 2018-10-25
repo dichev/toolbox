@@ -2,15 +2,16 @@
 
 const readline = require('readline')
 const console = require('../lib/Console')
+const History = require('../lib/History')
 const v = console.verbose
 
 class Input {
     
-    static info(msg){
-        console.info(msg)
+    constructor({collectHistoryFile = null} = {}){
+        this.history = collectHistoryFile ? new History(collectHistoryFile) : null
     }
     
-    static async confirm(question, def = 'yes', expect = ['yes', 'y']) {
+    async confirm(question, def = 'yes', expect = ['yes', 'y']) {
         return new Promise((resolve, reject) => {
             
             const rl = readline.createInterface({
@@ -33,7 +34,7 @@ class Input {
         })
     }
     
-    static async ask(question, choices, def){
+    async ask(question, choices, def){
         return new Promise((resolve, reject) => {
             
             const rl = readline.createInterface({
@@ -47,16 +48,31 @@ class Input {
             } else {
                 msg += `: `
             }
+    
+    
+            let listener
+            if(this.history) {
+                listener = (s, key) => {
+                    if (key.name === 'up' || key.name === 'down') {
+                        rl.write(null, {ctrl: true, name: 'u'}); // this will clear the current input
+                        let cmd = key.name === 'up' ? this.history.prev() : this.history.next()
+                        rl.write(cmd)
+                    }
+                }
+                process.stdin.on('keypress', listener)
+            }
             
             rl.question(msg, (answer) => {
                 rl.close()
-                
+                if (this.history) process.stdin.removeListener('keypress', listener)
+               
                 if(!answer && def) {
                     answer = def || ''
                 }
                 if(choices && !choices.includes(answer)){
-                    resolve(Input.ask(question, choices, def))
+                    resolve(this.ask(question, choices, def))
                 } else {
+                    if(this.history) this.history.add(answer)
                     resolve(answer)
                 }
                 

@@ -170,12 +170,26 @@ The idea is to not abstract the standard shell commands and to let sysadmin guys
 #### <a name="Input"></a>Input 
 Provide async methods for user cli input
 ```javascript
-const input = require('dopamine-toolbox').Input
+const Input = require('dopamine-toolbox').Input
 
+let input = new Input()
 let answer = await input.ask('What color?', ['yellow', 'blue', 'green'], 'green')
 await input.confirm('Are you sure you want to continue?')
 console.log('continue only if is confirmed')
 ```
+Optionally the typed answers could be saved between sessions in a file. 
+This is very useful to store commands history, like in shell
+```javascript
+const Input = require('../').Input
+
+let input = new Input({collectHistoryFile: __dirname + '/.history'})
+await input.ask('Type any command')
+console.log('doing some work..')
+await input.ask('Type another command')
+console.log('doing some work..')
+await input.ask('Press <up> and <down> to see the previous commands')
+```
+
 Aliases:
 ```javascript
 const Program = require('dopamine-toolbox').Program

@@ -16,6 +16,7 @@ const Tester = require('./tools/Tester')
 const MySQL = require('./tools/MySQL')
 const SSHClient = require('./tools/SSHClient')
 const console = require('./lib/Console')
+const colors = require('colors/safe')
 const Pattern = require('./lib/Pattern')
 const Chain = require('./lib/Chain')
 const Chat = require('./plugins/GoogleChat')
@@ -226,7 +227,7 @@ class Program {
             await this._before()
             
             if(parallel){
-                if (!quiet) console.info(`\n-- Running in parallel(${parallelLimit}): ${iterations} -----------------------------------------`)
+                if (!quiet) console.log(colors.gray(`\n-- Running in parallel(${parallelLimit}): ${iterations} -----------------------------------------`))
                 let fnPromises = iterations.map(host => async () => {
                     if (!quiet) await this.chat.message(`*Executing on ${host}*`, { silent: true })
                     return fn(host)
@@ -236,7 +237,7 @@ class Program {
             }
             else {
                 for (let host of iterations) {
-                    if (!quiet && iterations.length > 1) console.info(`\n-- ${host} -----------------------------------------`)
+                    if (!quiet && iterations.length > 1) console.log(colors.gray(`\n-- ${host} -----------------------------------------`))
                     if (!quiet) await this.chat.message(`*Executing on ${host}*`, { silent: true })
                     await fn(host)
                     if(this.params.wait && iterations.length > 1) {
@@ -341,11 +342,12 @@ class Program {
             console.log(question, 'yes (force)')
             return
         }
-        return Input.confirm(question, def, expect)
+        return new Input().confirm(question, def, expect)
     }
     
     async ask(question, choices, def){
-        return Input.ask(question, choices, def)
+        let input = new Input()
+            return await input.ask(question, choices, def)
     }
     
     /**
