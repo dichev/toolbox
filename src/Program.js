@@ -142,9 +142,9 @@ class Program {
         commander.helpInformationOrigin = commander.helpInformation
         commander.helpInformation = () => {
             let help = commander.helpInformationOrigin()
-            help = help.replace(/( {2}Usage:) (\S+)/, '$1 node ' + this.name.command + '/' + this.name.action)
-            help = help.replace(/( {2}Options:\n)\n/, '$1')
-            help = help.replace(/( {4}-p, --parallel)/, '\n  Additional Options:\n$1')
+            help = help.replace(/(Usage:) (\S+)/, '$1 node ' + this.name.command + '/' + this.name.action)
+            help = help.replace(/(Options:\n)\n/, '$1')
+            help = help.replace(/( {2}-p, --parallel)/, '\nAdditional Options:\n$1')
             return help
         }
     
@@ -218,7 +218,7 @@ class Program {
         let iterations = this.params[loopBy].split(',')
     
         if (iterations.length > 3 && !this.params.force) {
-            let answer = await this.ask(`It seems there are ${iterations.length} iterations. Do you want to activate --force mode?`, ['yes', 'no'])
+            let answer = await this.ask(`It seems there are ${iterations.length} iterations. Do you want to activate --force mode?`, ['yes', 'no'], 'yes')
             if (answer === 'yes') this.params.force = true
         }
         
