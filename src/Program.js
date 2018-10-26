@@ -216,11 +216,6 @@ class Program {
         let parallel = this.params.parallel !== undefined
         let parallelLimit = this.params.parallel || 0
         let iterations = this.params[loopBy].split(',')
-    
-        if (iterations.length > 3 && !this.params.force) {
-            let answer = await this.ask(`It seems there are ${iterations.length} iterations. Do you want to activate --force mode?`, ['yes', 'no'], 'yes')
-            if (answer === 'yes') this.params.force = true
-        }
         
         try {
             this.isRun = true

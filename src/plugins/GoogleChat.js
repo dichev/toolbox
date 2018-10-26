@@ -6,11 +6,11 @@ const console = require('../lib/Console')
 const toHex = require('../lib/Colors').toHex
 
 const icons = {
-    WARN:    'https://cdn-eu.cloudedge.info/icons/warn.png?v=1',
-    ERROR:   'https://cdn-eu.cloudedge.info/icons/error.png?v=1',
-    GEAR:    'https://cdn-eu.cloudedge.info/icons/gear.png?v=1',
-    DEPLOY:  'https://cdn-eu.cloudedge.info/icons/deploy.png?v=1',
-    PACKAGE: 'https://cdn-eu.cloudedge.info/icons/package.png?v=2',
+    WARN:    'https://cdn-eu.cloudedge.info/icons/warn.png?v=3',
+    ERROR:   'https://cdn-eu.cloudedge.info/icons/error.png?v=3',
+    GEAR:    'https://cdn-eu.cloudedge.info/icons/gear.png?v=3',
+    DEPLOY:  'https://cdn-eu.cloudedge.info/icons/deploy.png?v=3',
+    PACKAGE: 'https://cdn-eu.cloudedge.info/icons/package.png?v=3',
 }
 
 class GoogleChat {
