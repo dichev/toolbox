@@ -28,7 +28,7 @@ const ansiRegex = require('ansi-regex')
 
 class Program {
     
-    constructor({chat = null } = {}) {
+    constructor({chat = null, smartForce = false } = {}) {
  
         /** @type Params **/
         this.params = null
@@ -39,6 +39,7 @@ class Program {
         this._pools = { ssh: [], db: []}
         this._dryRun = false
         this._requiredFlags = []
+        this._smartForce = smartForce
         this.isRun = false
         
         /** @var GoogleChat **/
@@ -216,6 +217,11 @@ class Program {
         let parallel = this.params.parallel !== undefined
         let parallelLimit = this.params.parallel || 0
         let iterations = this.params[loopBy].split(',')
+    
+        if (this._smartForce && !this.params.force && iterations.length >= 3) {
+            let answer = await this.ask(`It seems there are ${iterations.length} iterations. Do you want to activate --force mode?`, ['yes', 'no'], 'yes')
+            if (answer === 'yes') this.params.force = true
+        }
         
         try {
             this.isRun = true
