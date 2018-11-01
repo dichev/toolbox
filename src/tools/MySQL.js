@@ -101,6 +101,7 @@ class MySQL {
         if(this._thresholds.enabled) await this._waitOnHighLoad()
         
         let [rows, fields] = await this._db.query(SQL, params)
+        
         v('-> Results:', rows.length + '\n')
         return rows
     }
@@ -108,6 +109,14 @@ class MySQL {
     async dump({exportSchema = true, exportData = false, sortKeys = false, maxChunkSize = 1000, dest = null, modifiers = [], excludeTables = [], includeTables = [], excludeColumns = {}, reorderColumns = {}}){
         let dumper = new MySQLDumper(this.getConnection())
         return await dumper.dump({exportSchema, exportData, sortKeys, maxChunkSize, dest, modifiers, excludeTables, includeTables, excludeColumns, reorderColumns})
+    }
+    
+    /**
+     *  strange way of detecting is the result from multiple statements or not
+     * @param res
+     */
+    isMultiResult(res) {
+        return res.length > 1 && Array.isArray(res[res.length - 1])
     }
     
     /**
@@ -135,6 +144,7 @@ class MySQL {
         
         return [rows.map(row => Object.keys(row).map(key => row[key]))]
     }
+    
     
     /**
      * @param {string} query
