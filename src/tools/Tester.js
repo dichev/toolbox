@@ -4,7 +4,7 @@ const colors = require('colors/safe') // check 'chalk' package
 let verbose = (process.argv.findIndex(arg => arg === '-v' || arg === '--verbose') !== -1)
 
 
-let report = {pass: 0, fail: 0, warn: 0}
+let report = {pass: 0, fail: 0, warn: 0, text: { full: '', failed: '', summary: '' }}
 
 
 /**
@@ -13,20 +13,29 @@ let report = {pass: 0, fail: 0, warn: 0}
 class Tester {
     
     /**
-     * @return {{fail: number, pass: number}}
+     * @return {{fail: number, pass: number, warn: number, text: { full: string, failed: string, summary: string }}}
      */
     static report(errorOnFail = true) {
         let {pass, fail, warn} = report
     
         console.log(`\n\n----------------------------------------------`)
+        report.text.summary = `\n\n----------------------------------------------\n`
     
-        if (pass) console.log(colors.green(`Passed ${pass} test cases`))
-        if (warn) console.log(colors.yellow(`Warning on ${warn} test cases`))
+        if (pass) {
+            console.log(colors.green(`Passed ${pass} test cases`))
+            report.text.summary += `Passed ${pass} test cases\n`
+        }
+        if (warn) {
+            console.log(colors.yellow(`Warning on ${warn} test cases`))
+            report.text.summary += `Warning on ${warn} test cases\n`
+        }
         if (fail) {
-            if (errorOnFail) throw Error(`Failed ${fail} test cases`)
+            if (errorOnFail) throw Error(`Failed ${fail} test cases\n`)
             console.log(colors.red(`Failed ${fail} test cases`))
+            report.text.summary += `Failed ${fail} test cases\n`
             console.log(colors.gray('Run --verbose mode to see the errors stack'))
         }
+        
         return report
     }
     
@@ -49,51 +58,94 @@ class Tester {
     async run(errorOnFail = true, suitName = ''){
         if(this.isRunning) return // could happen in parallel execution
         this.isRunning = true
-        if(!this.silent) console.log(`\n--- Running test suit: ${suitName} ---------------`)
     
-        let pass = 0
-        let fail = 0
-        let warn = 0
+    
+        if (!this.silent) console.log(`\n--- ${this.prefix} Running test suit: ${suitName} ---------------`)
         
         while(this.testCases.length){
             let {title, fn, type} = this.testCases.shift()
             try {
                 if(type === 'info'){
-                    console.info(`  [i] ${title}`)
+                    this._collect(title, 'info')
                     await fn()
                 }
                 else {
                     await fn()
                     if(this._skipped) {
-                        console.log(colors.gray(`  [-] ${title}`))
+                        this._collect(title, 'skip')
                         this._skipped = false
                     } else {
-                        console.log(colors.green(`  [√] `) + title)
+                        this._collect(title, 'pass')
                     }
                 }
-                pass++
             } catch (err) {
                 if(type === 'warn'){
-                    console.warn(colors.yellow(`  [!] `) + title)
-                    warn++
+                    this._collect(title, 'warn')
                 } else {
-                    console.error(colors.red(`  [x] ${title}`))
-                    fail++
+                    this._collect(title, 'fail')
                 }
-                console.log(colors.gray(err.message || err.toString()))
+                this._collect(err.message || err.toString(), 'fail_details')
                 if(verbose && err.stack) console.log('      ' + colors.gray(err.stack.replace(/\r?\n/g, '\n      ') + '\r\n'))
             }
         }
     
-        report.pass += pass
-        report.fail += fail
-        report.warn += warn
         if(errorOnFail) this.status(true)
     
         // if (!this.silent) console.log(`----------------------------------------------\n`)
         this.isRunning = false
-        return { fail, pass, warn }
+        return report
     }
+    
+    _collect(msg, type){
+        let text = ''
+        
+        switch (type){
+            
+            case 'info':
+                console.info(`  [i] ${msg}`)
+                report.pass++
+                break;
+            
+            case 'skip':
+                text = `  [-] ${msg}`
+                console.log(colors.gray(text))
+                report.pass++
+                break;
+            
+            
+            case 'pass':
+                text = `  [√] ${msg}`
+                console.log(colors.green(`  [√] `) + msg)
+                report.pass++
+                break;
+            
+            
+            case 'warn':
+                text = `  [!] ${msg}`
+                console.warn(colors.yellow(`  [!] `) + msg)
+                report.warn++
+                break;
+            
+            
+            case 'fail':
+                text = `  [x] ${msg}`
+                console.error(colors.red(text))
+                report.text.failed += text.trim() + '\n'
+                report.fail++
+                break;
+            
+            
+            
+            case 'fail_details':
+                text = msg
+                console.log(colors.gray(msg))
+                report.text.failed += text + '\n'
+                break;
+        }
+        
+        report.text.full += text + '\n'
+    }
+    
     
     /**
      * @return {{fail: number, pass: number}}

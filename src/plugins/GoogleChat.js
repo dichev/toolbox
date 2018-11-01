@@ -7,7 +7,7 @@ const toHex = require('../lib/Colors').toHex
 
 const icons = {
     WARN:    'https://cdn-eu.cloudedge.info/icons/warn.png?v=3',
-    ERROR:   'https://cdn-eu.cloudedge.info/icons/error.png?v=3',
+    ERROR:   'https://cdn-eu.cloudedge.info/icons/error.png?v=4',
     GEAR:    'https://cdn-eu.cloudedge.info/icons/gear.png?v=3',
     DEPLOY:  'https://cdn-eu.cloudedge.info/icons/deploy.png?v=3',
     PACKAGE: 'https://cdn-eu.cloudedge.info/icons/package.png?v=3',
