@@ -274,7 +274,7 @@ class SSHClient {
     
         stream.on('close', (code) => {
             if (code !== 0) {
-                new Error(stderr.trim() || 'Error code: ' + code)
+                throw new Error(stderr.trim() || 'Error code: ' + code)
             }
             callback(null, trim ? output.trim() : output)
         })
