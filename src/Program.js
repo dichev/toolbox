@@ -43,7 +43,7 @@ class Program {
         this.isRun = false
         
         /** @var GoogleChat **/
-        this.chat = new Chat(chat, this.name.command, false)
+        this.chat = new Chat(chat, this.name.command + Date.now(), false)
     
         process.on('uncaughtException', (err) => this._errorHandler(err))
         process.on('unhandledRejection', (reason) => this._errorHandler(reason))
