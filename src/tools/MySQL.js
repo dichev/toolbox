@@ -202,6 +202,13 @@ class MySQL {
                 throw Error('The operation is not approved. Aborting..')
             }
         }
+        if(this.hasDelimiter(SQL)){
+            console.warn('WARNING! Your query contains unsupported sql keyword: DELIMITER')
+            console.info(SQL)
+            console.warn(`DELIMITER is not part of MySQL server, it's part of the MySQL command line client`)
+            console.warn(`Please remove it from the SQL statement and replace all delimiters with the standard ; - it will work fine`)
+            throw Error('DELIMITER is not supported sql constant. Aborting..')
+        }
     }
     
     /**
@@ -211,6 +218,10 @@ class MySQL {
      */
     isSafe(SQL) {
         return /(DROP\s+DATABASE|DROP\s+USER)/gmi.test(SQL) !== true
+    }
+    
+    hasDelimiter(SQL){
+        return /^ *DELIMITER +.+/gmi.test(SQL) === true
     }
     
     
