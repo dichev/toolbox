@@ -105,12 +105,14 @@ class Program {
             if(values.includes('all')) {
                 values = [].concat(choices).concat(values.filter(v => v !== 'all'))
             }
-            let excluded = values.filter(v => v.startsWith('-')).map(v => v.substr(1))
-            if(excluded.length) {
-                values = values.filter(v => !v.startsWith('-') && !excluded.includes(v))
-            }
-            val = Pattern.intersect(values, choices, true).join(',')
             
+            let excluded = values.filter(v => v.startsWith('-')).map(v => v.substr(1))
+            let included = values.filter(v => !v.startsWith('-'))
+            
+            excluded = Pattern.intersect(excluded, choices, true)
+            included = Pattern.intersect(included, choices, true)
+            
+            val = included.filter(v => !excluded.includes(v)).join(',')
             return val
         }, def)
         
