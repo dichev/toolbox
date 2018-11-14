@@ -23,6 +23,7 @@ class MySQL {
         this._db = null
         this._ssh = null
         this._dbName = null
+        this._prefix = '[mysql]'
         
         this._thresholds = {
             enabled: false,
@@ -63,6 +64,7 @@ class MySQL {
             dateStrings: 'date',
             multipleStatements: true
         }
+        this._prefix = (DRY_RUN ? 'DRY RUN | `' : '') + `[mysql ${user}@${host}]`
     
         if (ssh) {
             if(!password) {
@@ -86,15 +88,16 @@ class MySQL {
      */
     async disconnect(){
         if (this._db) this._db.end()
-        v(`[mysql] disconnected`)
+        v(`${this._prefix} disconnected`)
         if (this._ssh) await this._ssh.disconnect()
         this._db = this._ssh = null
+        this._prefix = '[mysql]'
         return this
     }
     
     // TODO: implement --show-warnings
-    async query(SQL, params){
-        v(`${DRY_RUN?'DRY RUN | ':''}[mysql]\n${sqlTrim(SQL)}\n[${params||''}]`)
+    async query(SQL, params = []){
+        v(`${this._prefix}\n` + sqlTrim(SQL) + (params.length ? `\n[${params||''}]` : ''))
         await this._protect(SQL)
         if(DRY_RUN) return []
         
@@ -102,7 +105,7 @@ class MySQL {
         
         let [rows, fields] = await this._db.query(SQL, params)
         
-        v('-> Results:', rows.length + '\n')
+        v(rows)
         return rows
     }
     
@@ -175,7 +178,7 @@ class MySQL {
         
         let [rows, fields] = await this._db.query(`SHOW GLOBAL STATUS like 'threads_connected'`)
         let threads = parseInt(rows[0].Value)
-        v(`[mysql] Detected ${threads} active connections`)
+        v(`${this._prefix} Detected ${threads} active connections`)
         if(threads > t.connections){
             console.warn(`[mysql] Pausing query execution due high load: ${threads} connections (${t.connections} limit)`)
             await sleep(t.interval)
