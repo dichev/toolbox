@@ -262,14 +262,18 @@ class SSHClient {
         stream.stderr.setEncoding('utf8')
         
         stream.stdout.on('data', data => {
-            output += data
-            if(!secret) (this._silent || silent) ? v(data) : process.stdout.write(data)
+            let prefix = colors.cyan(this._location) + ': '
+            let dataPrefixed = prefix + data.split('\n').join('\n' + prefix)
+            output += data // do not overwrite or change original data ( it may be used by callback, and should stay free of any modifications )
+            if(!secret) (this._silent || silent) ? v(dataPrefixed) : process.stdout.write(dataPrefixed)
         })
         
         stream.stderr.on('data', data => {
+            let prefix = colors.cyan(this._location) + ': '
+            let dataPrefixed = prefix + data.split('\n').join('\n' + prefix)
             output += data
             stderr += data
-            if(!secret) (this._silent || silent) ? v(data) : process.stdout.write(colors.yellow(data))
+            if(!secret) (this._silent || silent) ? v(dataPrefixed) : process.stdout.write(colors.yellow(dataPrefixed))
         })
     
         stream.on('close', (code) => {
