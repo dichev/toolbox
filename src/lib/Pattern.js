@@ -32,7 +32,7 @@ class Pattern {
         for (let p of patterns) {
             let found = sources.filter(s => this.test(p, s))
             found.forEach(s => set.add(s))
-            if (strict && !found.length) throw Error(`No match to ${p}. Available: ${sources}`)
+            if (strict && !found.length) throw Error(`No match to ${p}. Available:\n ${sources.sort().join('\n ')}`)
         }
         
         return Array.from(set)
