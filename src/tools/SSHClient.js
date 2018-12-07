@@ -255,22 +255,22 @@ class SSHClient {
      * @private
      */
     _handleStream(stream, { secret = false, silent = false, trim = true } = {}, callback) {
-        let stderr = '';
-        let output = '';
+        let stderr = ''
+        let stdout = ''
+        let output = ''
         
         stream.stdout.setEncoding('utf8')
         stream.stderr.setEncoding('utf8')
         
         stream.stdout.on('data', data => {
-            let prefix = colors.cyan(this._location) + ': '
-            let dataPrefixed = prefix + data.split('\n').join('\n' + prefix)
+            let dataPrefixed = this._formatPrefix(stdout, data)
             output += data // do not overwrite or change original data ( it may be used by callback, and should stay free of any modifications )
+            stdout += data
             if(!secret) (this._silent || silent) ? v(dataPrefixed) : process.stdout.write(dataPrefixed)
         })
         
         stream.stderr.on('data', data => {
-            let prefix = colors.cyan(this._location) + ': '
-            let dataPrefixed = prefix + data.split('\n').join('\n' + prefix)
+            let dataPrefixed = this._formatPrefix(stderr, data)
             output += data
             stderr += data
             if(!secret) (this._silent || silent) ? v(dataPrefixed) : process.stdout.write(colors.yellow(dataPrefixed))
@@ -282,6 +282,23 @@ class SSHClient {
             }
             callback(null, trim ? output.trim() : output)
         })
+    }
+    
+    _formatPrefix(prev, chunk){
+        let prefix = colors.cyan(this._location + ': ')
+        let str = chunk
+    
+        if (!prev || prev.endsWith('\n')) {
+            str = prefix + str
+        }
+
+        if(chunk.endsWith('\n')){
+            str = str.slice(0, -1).replace(/\n/g, '\n' + prefix) + '\n'
+        } else {
+            str = str.replace(/\n/g, '\n' + prefix)
+        }
+        
+        return str
     }
     
     
