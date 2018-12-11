@@ -192,8 +192,23 @@ class SSHClient {
             });
         })
     }
-    
-    
+
+    async packageExists(pack){
+        return (await this.exec(`dpkg -l | grep ${pack} | wc -l`,{silent:true}) > '0')
+    }
+
+    async fileAppend(file,content){
+        return (await this.exec("echo '" + Buffer.from(content).toString('base64') + "' | base64 -d >> " + file,{silent:true}))
+    }
+
+    async findInFile(file,needle){
+        try{
+            return (await this.exec(`cat  ${file} | grep ${needle}`,{silent:true})).split("\n")
+        }catch(e){
+            return []
+        }
+    }
+
     /**
      * @param {object} cfg
      * @param {function} callback
