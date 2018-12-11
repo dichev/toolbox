@@ -192,8 +192,37 @@ class SSHClient {
             });
         })
     }
-    
-    
+
+    /**
+     * @param {string} pack - Package name to look for
+     * @returns {Promise<boolean>}
+     */
+    async packageExists(pack){
+        return (await this.exec(`dpkg -l | grep ${pack} | wc -l`,{silent:true}) > '0')
+    }
+
+    /**
+     * @param {string} file - File name
+     * @param {string} content - Content to be appended
+     * @returns {Promise<*>}
+     */
+    async fileAppend(file,content){
+        return (await this.exec("echo '" + Buffer.from(content).toString('base64') + "' | base64 -d >> " + file,{silent:true}))
+    }
+
+    /**
+     * @param {string} file - File to be searched
+     * @param {string} needle - String to search for
+     * @returns {Promise<array>}
+     */
+    async findInFile(file,needle){
+        try{
+            return (await this.exec(`cat  ${file} | grep ${needle}`,{silent:true})).split("\n")
+        }catch(e){
+            return []
+        }
+    }
+
     /**
      * @param {object} cfg
      * @param {function} callback
