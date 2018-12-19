@@ -20,6 +20,7 @@ class History {
     }
     
     add(cmd){
+        if(!cmd.trim()) return
         if(this.commands[this.commands.length - 1] !== cmd) {
             this.commands.push(cmd)
             fs.appendFileSync(this.cacheFile, cmd + '\r\n', null, () => {})
