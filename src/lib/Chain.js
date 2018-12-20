@@ -1,15 +1,18 @@
 'use strict'
 
+const sleep = (sec) => new Promise(resolve => setTimeout(resolve, sec * 1000))
+
 class Chain {
     
     /**
      * @param {int} limit=1
+     * @param {int} delay=0 - specify delay in seconds between every next promise. Used for throttling reasons
      * @param {Array<Function>} fnPromises - array of functions which returns promises
      * @return {Promise.<*>}
      */
-    static async parallelLimit(limit = 1, fnPromises) {
+    static async parallelLimit(limit = 1, delay = 0, fnPromises) {
         let chain = new Chain(fnPromises)
-        let results = await chain.parallelLimit(limit)
+        let results = await chain.parallelLimit(limit, delay)
         return results
     }
     
@@ -28,15 +31,19 @@ class Chain {
     
     /**
      * @param {int} limit - if is set to 0, then there will be no limit (will fallback to Promise.all)
+     * @param {int} delay=0 - specify delay in seconds between every next promise. Used for throttling reasons
      * @return {Array} of all promises results
      */
-    async parallelLimit(limit){
+    async parallelLimit(limit, delay = 0){
         if(limit < 0) throw Error(`Wrong usage of parallelLimit, the limit(${limit}) should be greater or equal to 0`)
-        if(limit === 0) return Promise.all(this.fnPromises.map(fn => fn()))
+        if(limit === 0) return Promise.all(this.fnPromises.map(async (fn, i) => {
+            await sleep(i * delay)
+            return fn()
+        }))
     
         let chains = [];
         for (let i = 0; i < limit; i++) {
-            chains.push(this._next());
+            chains.push(this._next(i * delay));
         }
     
         await Promise.all(chains)
@@ -46,7 +53,8 @@ class Chain {
     }
     
    
-    async _next() {
+    async _next(delay = 0) {
+        await sleep(delay)
         let promise = this.fnPromises.shift()
         
         if(promise){

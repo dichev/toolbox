@@ -43,7 +43,7 @@ class Program {
         this.isRun = false
         
         /** @var GoogleChat **/
-        this.chat = new Chat(chat, this.name.command + Date.now(), false)
+        this.chat = new Chat(chat, this.name.command + new Date().toJSON().slice(0, 10), false)
     
         process.on('uncaughtException', (err) => this._errorHandler(err))
         process.on('unhandledRejection', (reason) => this._errorHandler(reason))
@@ -235,7 +235,7 @@ class Program {
                     if (!quiet) await this.chat.message(`*Executing on ${host}*`, { silent: true })
                     return fn(host)
                 })
-                await Chain.parallelLimit(parallelLimit, fnPromises)
+                await Chain.parallelLimit(parallelLimit, 0.100, fnPromises)
                 this.destroy() // TODO: could keep open a lot connections
             }
             else {
