@@ -159,12 +159,13 @@ let shell = new Shell()
 await shell.exec('echo "Start execution at $(date)"')
 await shell.chdir('../')
 await shell.exec(`
-    set -e
     echo "this is a multi-line shell script"
     echo "working directory is: $(pwd)"
 `)
 ```
-Note the shell doesn't support any fancy functions like shell.git(), shell.find(), shell.mkdir(), etc.. by reason.
+The execution will be done in **bash with "set -e" mode activated** (to avoid mistakes in multi-line scripts)
+
+The shell doesn't support any fancy functions like shell.git(), shell.find(), shell.mkdir(), etc.. by reason.
 The idea is to not abstract the standard shell commands and to let sysadmin guys to write automation in the way the know best, aka piping
 
 #### <a name="Input"></a>Input 
@@ -246,6 +247,7 @@ console.log(await ssh.readFile(file))
 await ssh.exec(`rm -v ${file}`)
 await ssh.disconnect()
 ```
+The execution will be done **with "set -e" mode activated** for multi-line scripts to avoid mistakes
 
 #### <a name="MySQL"></a>MySQL 
 Adapter over mysql2 lib: https://www.npmjs.com/package/mysql2

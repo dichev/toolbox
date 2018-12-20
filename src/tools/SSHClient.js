@@ -265,6 +265,7 @@ class SSHClient {
         if (!options.secret) v(`${isDryMode?'DRY RUN | ':''}${this._location}:${this._cwd}$`, cmd);
         if (!this._ssh) throw Error('Can not .exec commands before SSH is connected!')
         if (this._cwd) cmd = `cd ${this._cwd} && ` + cmd
+        if(cmd.search('\n') !== -1) cmd = 'set -e && ' + cmd
         
         this._protect(cmd).then(() => {
             if (isDryMode) return callback()

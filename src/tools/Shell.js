@@ -38,7 +38,7 @@ class Shell {
         return new Promise((resolve, reject) => {
             let output = ''
             let stderr = ''
-            let bash = spawn('bash', ['-c', cmd], {stdio: ['inherit', 'pipe', 'pipe']}) // Known-issue: with inherit, the terminal colors in Windows MinGW (mintty) will be broken and displayed as ANSI codes
+            let bash = spawn('bash', ['-e', '-c', cmd], {stdio: ['inherit', 'pipe', 'pipe']}) // Known-issue: with inherit, the terminal colors in Windows MinGW (mintty) will be broken and displayed as ANSI codes
             bash.stdout.setEncoding('utf8')
             bash.stderr.setEncoding('utf8')
             
