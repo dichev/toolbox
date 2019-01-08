@@ -72,12 +72,14 @@ class SSHClient {
     }
 
     /**
+     * @param {object} shellProp Remote Shell properties
      * Starts interactive shell session on remote server
      * @returns {Promise<*>}
      */
-    async shell() {
+    async shell(shellProp) {
+        shellProp = shellProp || { term: 'xterm-256color'}
         return new Promise((resolve, reject) => {
-            this._ssh.shell(function(err, stream) {
+            this._ssh.shell(shellProp,function(err, stream) {
                 if (err) throw err;
 
                 process.stdin.setRawMode(true);
