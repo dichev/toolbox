@@ -70,8 +70,37 @@ class SSHClient {
             })
         })
     }
-    
-    
+
+    /**
+     * Starts interactive shell session on remote server
+     * @returns {Promise<*>}
+     */
+    async shell() {
+        return new Promise((resolve, reject) => {
+            this._ssh.shell(function(err, stream) {
+                if (err) throw err;
+
+                process.stdin.setRawMode(true);
+                process.stdin.pipe(stream);
+                stream.pipe(process.stdout);
+                stream.stderr.pipe(process.stderr);
+                stream.setWindow(process.stdout.rows, process.stdout.columns);
+                process.stdout.on('resize', () => {
+                    stream.setWindow(process.stdout.rows, process.stdout.columns);
+                });
+
+                const listeners = process.stdin.listeners('keypress');
+                process.stdin.removeAllListeners('keypress');
+                stream.on('close', function() {
+                    process.stdin.setRawMode(false);
+                    process.stdin.unpipe(stream);
+                    process.stdin.unref();
+                    listeners.forEach(listener => process.stdin.addListener('keypress', listener));
+                });
+            })
+        })
+    }
+
     /**
      *  TODO: could be changed to ssh.exec(cmd, {screen: true})
      *  TODO: using nohup because can't detect when screen job is finished: $ screen -dm bash -c "${cmd} >> ${LOGFILE} 2>&1"
