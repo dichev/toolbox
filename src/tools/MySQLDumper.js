@@ -234,14 +234,20 @@ class MySQLDumper {
                 let values = [];
                 for (let k in row) {
                     let v = row[k]
-                    if (typeof v === 'number') {
-                        values.push(v)
-                    }
-                    else if (v === null) {
+                    if (v === null) {
                         values.push('NULL')
                     }
+                    else if (typeof v === 'number') {
+                        values.push(v)
+                    }
                     else {
-                        let val = this.connection.escape(v)
+                        let val = ''
+                        if (typeof v === 'object') { // json
+                            val = JSON.stringify(v)
+                        } else {
+                            val = v
+                        }
+                        val = this.connection.escape(val)
                         val = val.replace(/\\"/g, '"') // restore escaping of double quotes (because json)
                         values.push(val)
                     }
