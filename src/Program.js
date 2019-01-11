@@ -453,7 +453,7 @@ class Program {
             gitlabUrl = require(process.cwd() + '/package.json').repository.url
         } catch (err) {
             // well it can't work always, but that's fine ;)
-            console.verbose('[expected] Attempted to find the command repository url, but failed:', err)
+            console.verbose('[expected] Attempted to find the command repository url, but failed with following error:', err.toString())
             return
         }
     
