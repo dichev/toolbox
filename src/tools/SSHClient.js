@@ -1,6 +1,6 @@
 'use strict';
 
-const promisify = require('util').promisify;
+const util = require('util')
 const path = require('path')
 const SSH2 = require('ssh2'); // TODO: check security
 const Input = require('./Input')
@@ -263,6 +263,8 @@ class SSHClient {
         v(`[ssh] Connecting to ${this._location} via ssh..`);
         if(!cfg.username) throw Error('[ssh] Missing username: ' + cfg.username)
         if(!cfg.host) throw Error('[ssh] Missing host: ' + cfg.host)
+        if(typeof cfg.host !== 'string') throw Error('[ssh] Invalid host (must be a string): ' + util.inspect(cfg.host))
+        if(typeof cfg.username !== 'string') throw Error('[ssh] Invalid username (must be a string): ' + util.inspect(cfg.username))
         if(!cfg.privateKey && typeof cfg.agent === 'undefined') cfg.agent = isWin ? 'pageant' : process.env.SSH_AUTH_SOCK
         if(!cfg.privateKey && typeof cfg.agentForward === 'undefined') cfg.agentForward = true
         
