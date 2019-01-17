@@ -23,7 +23,7 @@ class Input {
             rl.question(question, (answer) => {
                 rl.close()
                 
-                answer = (answer || def).toLowerCase()
+                answer = (answer || def).toLowerCase().trim()
                 
                 console.log(answer)
                 if(expect.includes(answer)){
