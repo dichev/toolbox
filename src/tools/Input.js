@@ -16,7 +16,8 @@ class Input {
             
             const rl = readline.createInterface({
                 input: process.stdin,
-                output: process.stdout
+                output: process.stdout,
+                terminal: true,
             })
             
             rl.question(question, (answer) => {
@@ -39,7 +40,8 @@ class Input {
             
             const rl = readline.createInterface({
                 input: process.stdin,
-                output: process.stdout
+                output: process.stdout,
+                terminal: true, // when the readline is called from child process, then rl.write doesn't display the written characters without this option
             })
             
             let msg = question
@@ -61,8 +63,9 @@ class Input {
                 }
                 process.stdin.on('keypress', listener)
             }
-            
+    
             rl.question(msg, (answer) => {
+                console.verbose({answer})
                 rl.close()
                 if (this.history) process.stdin.removeListener('keypress', listener)
                
