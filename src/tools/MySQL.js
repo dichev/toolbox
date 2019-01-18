@@ -5,6 +5,7 @@ const SSHClient = require('./SSHClient')
 const mysql = require('mysql2/promise') // TODO: too much deps
 const MySQLDumper = require('./MySQLDumper')
 const console = require('../lib/Console')
+const colors = require('colors/safe')
 const v = console.verbose
 const sleep = (sec) => new Promise((resolve) => setTimeout(resolve, sec * 1000))
 const sqlTrim = (sql) => {
@@ -64,7 +65,7 @@ class MySQL {
             dateStrings: 'date',
             multipleStatements: true
         }
-        this._prefix = (DRY_RUN ? 'DRY RUN | `' : '') + `[mysql ${user}@${host}]`
+        this._prefix = (DRY_RUN ? 'DRY RUN | `' : '') + colors.blue(`${user}@${host}`.padEnd(24) + ` | `)
     
         if (ssh) {
             if(!password) {

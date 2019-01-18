@@ -18,8 +18,7 @@ class SSHClient {
         this._ssh = null
         this._cwd = ''
         this._silent = false
-        
-        this._location = ''
+        this._prefix = '[ssh]'
     }
     
     get silent() {
@@ -50,6 +49,7 @@ class SSHClient {
         if (this._ssh) {
             this._ssh.end()
             this._ssh = null
+            this._prefix = '[ssh]'
         }
         return this
     }
@@ -154,7 +154,7 @@ class SSHClient {
     }
     
     async tunnel(boundPort, remotePort) {
-        v(`Tunneling 127.0.0.1:${boundPort} to 127.0.0.1:${remotePort}`);
+        v(this._prefix + `Tunneling 127.0.0.1:${boundPort} to 127.0.0.1:${remotePort}`);
         
         return new Promise((resolve, reject) => {
             this._ssh.forwardOut(
@@ -173,7 +173,7 @@ class SSHClient {
     
     
     async readFile(path) {
-        v(`[sftp] Reading from ${path}`)
+        v(this._prefix + `[sftp] Reading from ${path}`)
         return new Promise((resolve, reject) => {
             this._ssh.sftp((err, sftp) => {
                 if (err) return reject(err)
@@ -181,7 +181,7 @@ class SSHClient {
                 let content = ''
                 readStream.on('data', data => content += data)
                 readStream.on('close', () => {
-                    v(`[sftp] Data read ${path}`)
+                    v(this._prefix + `[sftp] Data read ${path}`)
                     sftp.end();
                     resolve(content)
                 })
@@ -191,13 +191,13 @@ class SSHClient {
     
     
     async writeFile(path, data){
-        v(`[sftp] Writing to ${path}`)
+        v(this._prefix + `[sftp] Writing to ${path}`)
         return new Promise((resolve, reject) => {
             this._ssh.sftp((err, sftp) => {
                 if (err) return reject(err)
                 let writeStream = sftp.createWriteStream(path);
                 writeStream.on('close', () => {
-                    v(`[sftp] Data written to ${path}`)
+                    v(this._prefix + `[sftp] Data written to ${path}`)
                     sftp.end();
                     resolve()
                 })
@@ -208,14 +208,14 @@ class SSHClient {
     }
     
      async uploadFile(localPath, remotePath){
-        v(`[sftp] Uploading ${localPath} to ${remotePath}`)
+        v(this._prefix + `[sftp] Uploading ${localPath} to ${remotePath}`)
         return new Promise((resolve, reject) => {
             this._ssh.sftp((err, sftp) => {
                 if (err) return reject(err)
                 let readStream = fs.createReadStream(localPath);
                 let writeStream = sftp.createWriteStream(remotePath);
                 writeStream.on('close', () => {
-                    v(`[sftp] Data written to ${remotePath}`)
+                    v(this._prefix + `[sftp] Data written to ${remotePath}`)
                     sftp.end();
                     resolve()
                 })
@@ -259,8 +259,9 @@ class SSHClient {
      * @param {function} callback
      */
     _connect(cfg, callback) {
-        this._location = cfg.username + '@' + cfg.host
-        v(`[ssh] Connecting to ${this._location} via ssh..`);
+        this._prefix = colors.cyan((cfg.username + '@' + cfg.host).padEnd(24) + ' | ')
+        
+        v(this._prefix + `Connecting via ssh..`);
         if(!cfg.username) throw Error('[ssh] Missing username: ' + cfg.username)
         if(!cfg.host) throw Error('[ssh] Missing host: ' + cfg.host)
         if(typeof cfg.host !== 'string') throw Error('[ssh] Invalid host (must be a string): ' + util.inspect(cfg.host))
@@ -271,15 +272,15 @@ class SSHClient {
         this._ssh = new SSH2();
         this._ssh
             .on('ready', () => {
-                v(`[ssh] Connected successfully to ${this._location}`);
+                v(this._prefix + `Connected successfully`);
                 callback(null, this._ssh);
             })
             .on('end', (data) => {
-                v(`[ssh] SSH connection closed: ${this._location}`);
+                v(this._prefix + `SSH connection closed`);
                 this._ssh = null;
             })
             .on('error', (err) => {
-                v(`[ssh] Error ${this._location}`);
+                v(this._prefix + `Error!`);
                 callback(err)
             })
             .connect(cfg);
@@ -295,7 +296,7 @@ class SSHClient {
      */
     _exec(cmd, options = {}, callback) {
         let isDryMode = DRY_RUN && !options.allowInDryRun
-        if (!options.secret) v(`${isDryMode?'DRY RUN | ':''}${this._location}:${this._cwd}$`, cmd);
+        if (!options.secret) v(this._prefix + `${isDryMode?'DRY RUN | ':''}${this._cwd}$`, cmd);
         if (!this._ssh) throw Error('Can not .exec commands before SSH is connected!')
         if (this._cwd) cmd = `cd ${this._cwd} && ` + cmd
         if(cmd.search('\n') !== -1) cmd = 'set -e && ' + cmd
@@ -326,14 +327,14 @@ class SSHClient {
         stream.stderr.setEncoding('utf8')
         
         stream.stdout.on('data', data => {
-            let dataPrefixed = this._formatPrefix(stdout, data)
+            let dataPrefixed = this._formatChunkPrefix(stdout, data)
             output += data // do not overwrite or change original data ( it may be used by callback, and should stay free of any modifications )
             stdout += data
             if(!secret) (this._silent || silent) ? v(dataPrefixed) : process.stdout.write(dataPrefixed)
         })
         
         stream.stderr.on('data', data => {
-            let dataPrefixed = this._formatPrefix(stderr, data)
+            let dataPrefixed = this._formatChunkPrefix(stderr, data)
             output += data
             stderr += data
             if(!secret) (this._silent || silent) ? v(dataPrefixed) : process.stdout.write(colors.yellow(dataPrefixed))
@@ -347,8 +348,8 @@ class SSHClient {
         })
     }
     
-    _formatPrefix(prev, chunk){
-        let prefix = colors.cyan(this._location + ': ')
+    _formatChunkPrefix(prev, chunk){
+        let prefix = this._prefix
         let str = chunk
     
         if (!prev || prev.endsWith('\n')) {
