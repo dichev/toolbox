@@ -266,7 +266,8 @@ class Program {
             if(!file.endsWith('.js')) file+= '.js'
             
             let link = this.getCommandSourceCodeUrl()
-            let code = `$ ${this.name.command} ${this.name.action} ${process.argv.slice(2).join(' ')}`
+            let args = process.argv.slice(2).map(a=>a.includes(' ') ? '"' + a + '"': a).join(' ')
+            let code = `$ ${this.name.command} ${this.name.action} ${args}`
             let delay = 0
             let msg = ''
             
