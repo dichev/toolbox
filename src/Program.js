@@ -319,7 +319,7 @@ class Program {
             await this.chat.message('`' + code + '`' + (link ? ` <${link}|see code>` : ''), { silent: true })
             await this.chat.announce(msg, {
                 title: titleCase(this.name.command + ' ' + this.name.action) + ' ' + (this.params.rev || this.params.tag || this.params.version || ''),
-                subtitle: 'by ' + os.userInfo().username,
+                subtitle: 'by ' + (process.env.DOPAMINE_SSH_USER || os.userInfo().username),
                 silent: true,
                 popup: true,
                 bold: false,
