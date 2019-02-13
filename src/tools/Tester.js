@@ -12,6 +12,10 @@ let report = {pass: 0, fail: 0, warn: 0, text: { full: '', failed: '', summary: 
  */
 class Tester {
     
+    static clean(){
+        report = {pass: 0, fail: 0, warn: 0, text: {full: '', failed: '', summary: ''}}
+    }
+    
     /**
      * @return {{fail: number, pass: number, warn: number, text: { full: string, failed: string, summary: string }}}
      */
