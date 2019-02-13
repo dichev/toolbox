@@ -88,7 +88,8 @@ class Program {
      */
     option(flags, description = '', { def, choices, required } = {}){
         if (def && choices) {
-            if (!choices.includes(def)) throw Error(`The default option(${def}) is not allowed as choices`)
+            if(def === 'all') def = choices.join(',')
+            else if (!choices.includes(def)) throw Error(`The default option(${def}) is not allowed as choices`)
         }
         if(choices) description += `. Available: ${choices}`
         if(required) {
