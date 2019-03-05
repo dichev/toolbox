@@ -131,7 +131,8 @@ class Program {
             .option('--dry-run', 'Dry run mode will do everything as usual except commands execution')
             .option('--quiet', 'Turn off chat and some logs in stdout')
             .option('--wait <int>', 'Pause between iterations in seconds')
-            .option('--announce', 'Announce what and why is happening and delay the execution to give time to all to prepare')
+            .option('--announce [text]', 'Announce what and why is happening. If there is no [text] value then it will be asked interactively (useful for avoiding escaping issues)')
+            .option('--delayed [minutes]', 'Delay starting of the command (useful in combination with announce)')
             .option('--no-chat', 'Disable chat notification if they are activated')
     
         commander.usage(this._usage)
@@ -277,7 +278,13 @@ class Program {
             }
             
             if(this.params.announce) {
-                let announce = await this.ask('Announce')
+                let announce;
+                if(this.params.announce === true) { // no params
+                    announce = await this.ask('Announce')
+                } else {
+                    announce = this.params.announce.trim()
+                }
+
                 if (announce) {
                     msg += `<b>Announce:</b> ${announce}<br/>`
                 }
@@ -299,13 +306,16 @@ class Program {
                 }
             }
             
-    
-            if (this.params.announce) {
+            
+            let delayed = this.params.delayed
+            if(delayed === undefined && this.params.announce === true){ // special case where the command is called only with this arg: --announce
+                delayed = await this.ask('Delay (2min)', null, 2)
+            }
+            if(delayed) {
                 let seconds = 0
-                let minutes = await this.ask('Delay (2min)', null, 2)
-                minutes = parseInt(minutes)
+                let minutes = parseInt(delayed)
     
-                if(minutes > 0)    {
+                if (minutes > 0) {
                     let now = new Date()
                     seconds = (60 - now.getSeconds())
                     now.setSeconds(0)
