@@ -9,6 +9,7 @@ const fs = require('fs')
 const v = console.verbose
 const colors = require('colors/safe')
 const isWin = require('os').platform() === 'win32'
+const readline = require('readline')
 
 const DRY_RUN = (process.argv.findIndex(arg => arg === '--dry-run') !== -1)
 
@@ -62,9 +63,9 @@ class SSHClient {
      * @param {boolean} [options.allowInDryRun]
      * @param {boolean} [options.trim]
      */
-    async exec(cmd, { silent = false, secret = false, allowInDryRun = false, trim = true } = {}) {
+    async exec(cmd, { silent = false, secret = false, allowInDryRun = false, trim = true, interactive = false } = {}) {
         return new Promise((resolve, reject) => {
-            this._exec(cmd, {silent, secret, allowInDryRun, trim}, (error, output) => {
+            this._exec(cmd, {silent, secret, allowInDryRun, trim, interactive}, (error, output) => {
                 if(error) reject(error)
                 else resolve(output)
             })
@@ -303,7 +304,7 @@ class SSHClient {
         
         this._protect(cmd).then(() => {
             if (isDryMode) return callback()
-            this._ssh.exec(cmd, (err, stream) => {
+            this._ssh.exec(cmd, {pty: options.interactive || false}, (err, stream) => {
                 if (err) return callback(err);
                 this._handleStream(stream, options, callback);
             })
@@ -318,11 +319,19 @@ class SSHClient {
      * @param {function} callback
      * @private
      */
-    _handleStream(stream, { secret = false, silent = false, trim = true } = {}, callback) {
+    _handleStream(stream, { secret = false, silent = false, trim = true, interactive = false } = {}, callback) {
         let stderr = ''
         let stdout = ''
         let output = ''
-        
+        let rl = null
+    
+        if(interactive) {
+            rl = readline.createInterface({ input: process.stdin, output: stream.stdout })
+            rl.on('line', (d) => {
+                stream.write(d.trim() + '\n')
+            })
+        }
+
         stream.stdout.setEncoding('utf8')
         stream.stderr.setEncoding('utf8')
         
@@ -341,6 +350,7 @@ class SSHClient {
         })
     
         stream.on('close', (code) => {
+            if (interactive) rl.close()
             if (code !== 0) {
                 return callback(new Error(stderr.trim() || 'Error code: ' + code))
             }
