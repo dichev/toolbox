@@ -2,7 +2,7 @@
 'use strict';
 
 const Program = require('../').Program
-const HOSTS = ['dev-hermes-web1.out','dev-hermes-web2.out']
+const HOSTS = ['sofia-dev-web1.out','sofia-dev-web2.out']
 
 let program = new Program()
 
