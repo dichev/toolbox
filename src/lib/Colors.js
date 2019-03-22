@@ -1,6 +1,8 @@
 'use strict'
 
 const colorName = require('color-name')
+const chalk = require('chalk')
+const rnd = (max) => Math.floor(Math.random() * max)
 
 class Colors {
     
@@ -36,6 +38,10 @@ class Colors {
             const hex = x.toString(16)
             return hex.length === 1 ? '0' + hex : hex
         }).join('')
+    }
+    
+    static toRandomANSIColor(str) {
+        return chalk.hsl(rnd(35) * 10, 50, 50)(str)
     }
     
 }
