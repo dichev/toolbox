@@ -1,6 +1,6 @@
 'use strict'
 
-const colors = require('colors/safe') // check 'chalk' package
+const colors = require('chalk')
 let verbose = (process.argv.findIndex(arg => arg === '-v' || arg === '--verbose') !== -1)
 
 

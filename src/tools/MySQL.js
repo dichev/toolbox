@@ -5,7 +5,7 @@ const SSHClient = require('./SSHClient')
 const mysql = require('mysql2/promise') // TODO: too much deps
 const MySQLDumper = require('./MySQLDumper')
 const console = require('../lib/Console')
-const colors = require('colors/safe')
+const colors = require('chalk')
 const v = console.verbose
 const sleep = (sec) => new Promise((resolve) => setTimeout(resolve, sec * 1000))
 const sqlTrim = (sql) => {

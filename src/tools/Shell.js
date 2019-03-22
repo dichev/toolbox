@@ -3,7 +3,7 @@
 const console = require('../lib/Console')
 const v = console.verbose
 const spawn = require('child_process').spawn
-const colors = require('colors/safe')
+const colors = require('chalk')
 
 const DRY_RUN = (process.argv.findIndex(arg => arg === '--dry-run') !== -1)
 
