@@ -7,11 +7,14 @@ const Input = require('./Input')
 const console = require('../lib/Console')
 const fs = require('fs')
 const v = console.verbose
-const colors = require('colors/safe')
+const colors = require('chalk')
+const randomColor = require('../lib/Colors').toRandomANSIColor
 const isWin = require('os').platform() === 'win32'
 const readline = require('readline')
 
 const DRY_RUN = (process.argv.findIndex(arg => arg === '--dry-run') !== -1)
+
+let HOSTS_COLORS = {}
 
 class SSHClient {
     
@@ -260,7 +263,10 @@ class SSHClient {
      * @param {function} callback
      */
     _connect(cfg, callback) {
-        this._prefix = colors.cyan((cfg.username + '@' + cfg.host).padEnd(24) + ' | ')
+        if(!HOSTS_COLORS[cfg.username + '@' + cfg.host]) {
+            HOSTS_COLORS[cfg.username + '@' + cfg.host] = randomColor((cfg.username + '@' + cfg.host).padEnd(24) + ' | ')
+        }
+        this._prefix = HOSTS_COLORS[cfg.username + '@' + cfg.host]
         
         v(this._prefix + `Connecting via ssh..`);
         if(!cfg.username) throw Error('[ssh] Missing username: ' + cfg.username)
