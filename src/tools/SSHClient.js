@@ -11,6 +11,7 @@ const colors = require('chalk')
 const randomColor = require('../lib/Colors').toRandomANSIColor
 const isWin = require('os').platform() === 'win32'
 const readline = require('readline')
+const progress = require('progress-stream');
 
 const DRY_RUN = (process.argv.findIndex(arg => arg === '--dry-run') !== -1)
 
@@ -208,6 +209,32 @@ class SSHClient {
                 writeStream.write(data.toString())
                 writeStream.end()
             });
+        })
+    }
+    
+    async copyFile(remotePath, localPath){
+        v(this._prefix + `[sftp] Writing ${localPath} to ${remotePath}`)
+
+        return new Promise((resolve, reject) => {
+            let str = progress({
+                length: fs.statSync(localPath).size,
+                time: 500 /* ms */
+            })
+            str.on('progress', (p) => {
+                console.log(colors.gray(`${p.percentage.toFixed(1)}% ${(p.transferred / 1024 / 1024).toFixed(1)}MB/${(p.length / 1024 / 1024).toFixed(1)}MB (speed: ${(p.speed / 1024 / 1024).toFixed(1)}MB/s, eta: ${p.eta}s)`))
+            })
+            
+            this._ssh.sftp((err, sftp) => {
+                if (err) return reject(err)
+                let readStream = fs.createReadStream(localPath)
+                let writeStream = sftp.createWriteStream(remotePath)
+                writeStream.on('close', () => {
+                    v(this._prefix + `[sftp] Data written to ${remotePath}`)
+                    sftp.end()
+                    resolve()
+                })
+                readStream.pipe(str).pipe(writeStream)
+            })
         })
     }
     
