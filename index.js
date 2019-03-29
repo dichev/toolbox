@@ -11,7 +11,8 @@ const Tester = require('./src/tools/Tester')
 const MySQL = require('./src/tools/MySQL')
 const MySQLDumper = require('./src/tools/MySQLDumper')
 const console = require('./src/lib/Console')
+const Utils = require('./src/lib/Utils')
 
 module.exports = { Program, Input, Shell, SSHClient, Tester, MySQL, MySQLDumper }
-module.exports.lib = { console }
+module.exports.lib = { console, Utils }
 module.exports.plugins = { CloudFlare, HipChat, GoogleChat }
