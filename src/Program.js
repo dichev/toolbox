@@ -244,8 +244,10 @@ class Program {
                 let i = 0
                 let total = iterations.length
                 for (let host of iterations) {
-                    if (!quiet && total > 1) console.log(colors.gray(`\n-- ${host} -----------------------------------------`))
-                    if (!quiet) await this.chat.message(`*${++i}/${total} Executing on ${host}*`, { silent: true })
+                    if (!quiet && total > 1) {
+                        console.log(colors.gray(`\n-- ${host} -----------------------------------------`))
+                        await this.chat.message(`*${++i}/${total} Executing on ${host}*`, { silent: true })
+                    }
                     await fn(host)
                     if(this.params.wait && total > 1) {
                         if (!quiet) await this.chat.message(`Waiting between iterations (${this.params.wait} sec)`, { silent: true })
