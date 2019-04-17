@@ -11,7 +11,8 @@ const sleep = (sec) => new Promise((resolve) => setTimeout(resolve, sec * 1000))
 const sqlTrim = (sql) => {
     sql = sql.trim().replace(/^(  )+/gm, '  ')
     let lines = sql.split(/\r\n|\r|\n/)
-    if (lines.length > 6) sql = lines.slice(0, 6).join('\n') + `\n.. (${lines.length-6} more)`
+    let max = 30
+    if (lines.length > max) sql = lines.slice(0, max).join('\n') + `\n.. (${lines.length-max} more)`
     return sql
 }
 
