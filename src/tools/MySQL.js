@@ -107,7 +107,7 @@ class MySQL {
         
         let [rows, fields] = await this._db.query(SQL, params)
         
-        v(rows)
+        v('Result: ' + (rows.length || 0) + ' rows')
         return rows
     }
     
