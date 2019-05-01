@@ -134,7 +134,7 @@ class MySQL {
             row = row[0]
         }
         
-        return Object.keys(row).join(', ')
+        return Object.keys(row).map(key => '`'+key+'`').join(', ')
     }
     
     /**
