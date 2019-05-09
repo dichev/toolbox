@@ -324,7 +324,8 @@ class Program {
                     seconds = (60 - now.getSeconds())
                     now.setSeconds(0)
                     now.setMinutes(now.getMinutes() + minutes) // TODO what if 59 + 2
-                    msg += `<b>Schedule:</b> ${now.toTimeString().substr(0, 8)} (after ${minutes} min)<br/>`
+                    let localTime = now.toLocaleString('bg-BG', {timeZone: "Europe/Sofia"}).match(/\d\d:\d\d:\d\d/)[0]
+                    msg += `<b>Schedule:</b> ${localTime} (after ${minutes} min)<br/>`
                     delay = minutes * 60 + seconds
                 }
             }
