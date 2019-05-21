@@ -44,6 +44,12 @@
             echo "working directory is: $(pwd)"
         `)
 
+        console.log('Creating folder test123')
+        await shell.exec('mkdir test123')
+        console.log('Check if exists: ', await shell.exists('test123'))
+        console.log('Deleting folder test123')
+        await shell.exec('rm -rf test123')
+
     }
    
     {

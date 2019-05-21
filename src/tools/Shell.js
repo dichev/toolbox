@@ -62,8 +62,15 @@ class Shell {
             })
         })
     }
-    
-    
+
+    /**
+     * @param {string} path
+     * @return {boolean}
+     */
+    async exists(path) {
+        let exists = await this.exec(`[ -e ${path} ] && echo EXISTS || echo NOT_EXISTS`, { silent: true, allowInDryRun: true })
+        return exists === 'EXISTS'
+    }
 }
 
 module.exports = Shell
