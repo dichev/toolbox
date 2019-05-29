@@ -12,7 +12,8 @@ const MySQL = require('./src/tools/MySQL')
 const MySQLDumper = require('./src/tools/MySQLDumper')
 const console = require('./src/lib/Console')
 const Utils = require('./src/lib/Utils')
+const Calc = require('./src/lib/Calc')
 
 module.exports = { Program, Input, Shell, SSHClient, Tester, MySQL, MySQLDumper }
-module.exports.lib = { console, Utils }
+module.exports.lib = { console, Utils, Calc }
 module.exports.plugins = { CloudFlare, HipChat, GoogleChat }

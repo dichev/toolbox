@@ -2,7 +2,12 @@
 'use strict';
 
 ;(async () => {
-    
+
+    {
+        const calc = require('../').lib.Calc
+        console.log(calc.generatePassword(10,20))
+    }
+
     {
         const Input = require('../').Input
 
