@@ -2,7 +2,12 @@
 'use strict';
 
 ;(async () => {
-    
+
+    {
+        const calc = require('../').lib.Utils
+        console.log(calc.generatePassword(10,20))
+    }
+
     {
         const Input = require('../').Input
 
@@ -75,7 +80,7 @@
 
         let ssh = new SSHClient()
         await ssh.connect({
-            host: 'dev-hermes-web1.out',
+            host: 'sofia-dev-web1.out',
             username: 'dopamine',
             agent: 'pageant',
             agentForward: true
