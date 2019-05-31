@@ -89,7 +89,7 @@ class MySQL {
      * @return {Promise<MySQL>}
      */
     async disconnect(){
-        if (this._db) this._db.end()
+        if (this._db) await this._db.end()
         v(`${this._prefix} disconnected`)
         if (this._ssh) await this._ssh.disconnect()
         this._db = this._ssh = null
