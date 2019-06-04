@@ -54,7 +54,7 @@ class SSHClient {
         return new Promise((resolve, reject) => {
             if (this._ssh) {
                 this._ssh.once('close', err => {
-                    if(err) reject(err)
+                    if(err) return reject(err)
                     this._ssh = null
                     this._prefix = '[ssh]'
                     resolve(this)
