@@ -52,11 +52,19 @@ class SSHClient {
      */
     async disconnect() {
         if (this._ssh) {
-            this._ssh.end()
-            this._ssh = null
-            this._prefix = '[ssh]'
+            try {
+                this._ssh.end()
+                return new Promise(resolve => {
+                    this._ssh.once('close', () => {
+                        this._ssh = null
+                        this._prefix = '[ssh]'
+                        resolve(this)
+                    })
+                })
+            } catch(e) {
+                throw e
+            }
         }
-        return this
     }
     
     /**
