@@ -177,10 +177,12 @@ class MySQLDumper {
         else if(includeTables.length){
             filter = `AND TABLE_NAME IN ('${includeTables.join("','")}')`;
         }
-        
-        let SQL_GET_TABLE_NAMES = `SELECT TABLE_NAME FROM information_schema.TABLES 
-                                   WHERE TABLE_SCHEMA = '${database}' ${filter}`
-        
+
+        //ORDER BY TABLE_TYPE, TABLE_NAME ASC - tables to get TABLE_TYPE=VIEW last so the schema will be valid for creation
+        let SQL_GET_TABLE_NAMES = `SELECT TABLE_NAME FROM information_schema.TABLES
+                                   WHERE TABLE_SCHEMA = '${database}' ${filter}
+                                   ORDER BY TABLE_TYPE, TABLE_NAME ASC`
+
         let [results] = await this.connection.query(SQL_GET_TABLE_NAMES)
         let tables = results.map(row => row.TABLE_NAME)
         return tables
