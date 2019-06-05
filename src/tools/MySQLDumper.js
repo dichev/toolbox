@@ -110,10 +110,9 @@ class MySQLDumper {
         output += 'CREATE DATABASE `'+ database+'`;\n'
         output += 'USE `'+ database+'`;\n\n'
         */
-        let tables = await this._getTableNames(database, excludeTables, includeTables)
+        let [tables,views] = await this._getTableNames(database, excludeTables, includeTables)
         // this._log(`Found ${tables.length} tables in ${database}`)
-        
-        
+        // this._log(`Found ${views.length} views in ${database}`)
         
         let structures = []
         if(exportSchema) {
@@ -121,12 +120,17 @@ class MySQLDumper {
                 let structure = await this._dumpStructure(table, database)
                 structures.push(structure)
             }
-    
+            
+            for (let view of views) { // TODO: use parallelLimit
+                let structure = await this._dumpStructure(view, database)
+                structures.push(structure)
+            }
+            
             if (sortKeys) {
                 structures = structures.map(this._sortKeys)
             }
             
-            if (tables.length !== structures.length) throw Error('Data inconsistency found!')
+            if ((tables.length + views.length) !== structures.length) throw Error('Data inconsistency found!')
         }
     
         
@@ -177,15 +181,16 @@ class MySQLDumper {
         else if(includeTables.length){
             filter = `AND TABLE_NAME IN ('${includeTables.join("','")}')`;
         }
-
-        //ORDER BY TABLE_TYPE, TABLE_NAME ASC - tables to get TABLE_TYPE=VIEW last so the schema will be valid for creation
-        let SQL_GET_TABLE_NAMES = `SELECT TABLE_NAME FROM information_schema.TABLES
-                                   WHERE TABLE_SCHEMA = '${database}' ${filter}
-                                   ORDER BY TABLE_TYPE, TABLE_NAME ASC`
-
+        
+        let SQL_GET_TABLE_NAMES = `SELECT TABLE_TYPE, TABLE_NAME FROM information_schema.TABLES
+                                   WHERE TABLE_SCHEMA = '${database}' ${filter}`
+        
         let [results] = await this.connection.query(SQL_GET_TABLE_NAMES)
-        let tables = results.map(row => row.TABLE_NAME)
-        return tables
+        
+        let tables = []
+        let views = []
+        results.map(row => (row.TABLE_TYPE === 'VIEW' ? views.push(row.TABLE_NAME) : tables.push(row.TABLE_NAME)))
+        return [tables, views]
     }
     
     async _dumpStructure(table, database){
