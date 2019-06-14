@@ -93,6 +93,10 @@
         }
         console.log(await ssh.readFile(file))
         await ssh.exec(`rm -v ${file}`)
+
+        console.log("await ssh.packageExists('git')")
+        console.log(await ssh.packageExists('git') === true)
+
         await ssh.disconnect()
     }
     
@@ -101,7 +105,7 @@
         const Program = require('../').Program
         let program = new Program()
 
-        let ssh = await program.ssh('dev-hermes-web1.out', 'dopamine')
+        let ssh = await program.ssh('sofia-dev-web1.out', 'dopamine')
         await ssh.chdir('/home')
         await ssh.exec('echo $PWD && ls -lah')
         await ssh.disconnect()
