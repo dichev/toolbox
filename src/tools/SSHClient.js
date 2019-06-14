@@ -267,7 +267,7 @@ class SSHClient {
      * @returns {Promise<boolean>}
      */
     async packageExists(pack){
-        return (await this.exec(`dpkg -l | grep ${pack} | wc -l`,{silent:true}) > '0')
+        return (await this.exec(`dpkg-query -W ${pack} | wc -l`,{silent:true}) === '1')
     }
 
     /**
