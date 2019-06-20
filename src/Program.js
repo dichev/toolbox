@@ -25,6 +25,7 @@ const os = require('os')
 const isWin = os.platform() === 'win32'
 const titleCase = (str) => str.replace(/\b\S/g, t => t.toUpperCase())
 const ansiRegex = require('ansi-regex')
+const fs = require('fs')
 
 class Program {
     
