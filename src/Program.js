@@ -155,6 +155,18 @@ class Program {
     
         commander.parse(process.argv)
         this.params = commander.opts()
+        
+        // START Read param from file
+        for ( let paramName in this.params ){
+            let param = this.params[paramName]
+            if(typeof param === 'string'){
+                if(param.substr(0,1) === '@'){
+                    this.params[paramName] = fs.readFileSync(param.substr(1)).toString()
+                }
+            }
+        }
+        // END Read param from file
+
         if (commander.dryRun) {
             console.info('============== DRY RUN =============')
             this._dryRun = true
