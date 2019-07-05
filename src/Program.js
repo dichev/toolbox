@@ -357,18 +357,19 @@ class Program {
                 // buttons: [{ text: 'see code', url: link }]
             })
 
-            let info = {
+            let action = 'node ' + this.name.command + '/' + this.name.action +
+                (this.params.rev || this.params.tag || this.params.version || '') +
+                ' ' + process.argv.slice(2).join(' ')
+
+            await this.logger.start({
                 startAt: new Date(),
                 endAt: null,
                 status: 'IN_PROGRESS',
-                // product: this._config.product,
-                action: this.name.command + ' ' + this.name.action + (this.params.rev || this.params.tag || this.params.version || ''),
-                environment: this.params, // change this
-                // provider: this._config.provider,
-                version: this.params.version,
-                user: (process.env['USERNAME'] + ' (' + process.env['COMPUTERNAME'] + ')'),
-                debugInfo: 'deployer ' + process.argv.slice(2).join(' ') + 'by ' + (process.env.DOPAMINE_SSH_USER || os.userInfo().username)
-            };
+                action: action,
+                jiraTicketId: 'https://jira.dopamine.bg/browse/' + this.params.ticketId || null,
+                user: this.params.deployUser ? this.params.deployUser : process.env['USERNAME'] + ' (' + process.env['COMPUTERNAME'] + ') ' + (process.env.DOPAMINE_SSH_USER || ''),
+                debugInfo: JSON.stringify(this.params),
+            })
 
             await this.logger.start(info)
             
