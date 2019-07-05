@@ -137,7 +137,7 @@ class Program {
             .option('--announce [text]', 'Announce what and why is happening. If there is no [text] value then it will be asked interactively (useful for avoiding escaping issues)')
             .option('--delayed [minutes]', 'Delay starting of the command (useful in combination with announce)')
             .option('--no-chat', 'Disable chat notification if they are activated')
-    
+
         commander.usage(this._usage)
         if (this._exampleUsage) {
             commander.on('--help', () => {
@@ -281,6 +281,12 @@ class Program {
     }
     
     async _before(){
+        // If logging is enabled, we need the jira ticket id and username
+        if(this.logger) {
+            this.params.ticketId   = await this.ask('Jira ticketId', null, 2)
+            this.params.deployUser = await this.ask('Who are you(username)?', null, 2)
+        }
+
         if(!this.params.quiet) {
             let parts = process.argv[1].replace(/\\/g, '/').split('/')
             let file = parts.slice(parts.length - 3).join('/')
