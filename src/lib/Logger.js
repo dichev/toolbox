@@ -27,8 +27,6 @@ class Logger {
     }
 
     async start(info){
-        console.log('#Deployer start at:', new Date());
-
         await this._prepare()
 
         await this._log(info);
@@ -40,7 +38,6 @@ class Logger {
      * @returns {*}
      */
     async end(exitCode, msg){
-        console.log('#Deployer end at:', new Date());
 
         let status = ['SUCCESS', 'ERROR', 'ABORT'][exitCode];
         let info = {
@@ -73,13 +70,13 @@ class Logger {
     async _prepare() {
         if(this.hasMySQLLog) {
 
-            if(this._config.logging.mysql.ssh) {
-                this._ssh = await new SSHClient().connect({host: this._config.logging.mysql.host, username: 'root'})
+            if(this._config.mysql.ssh) {
+                this._ssh = await new SSHClient().connect({host: this._config.mysql.host, username: 'root'})
             }
 
             let client = new MySQLClient();
             try {
-                this._db = await client.connect(this._config.logging.mysql, this._ssh)
+                this._db = await client.connect(this._config.mysql, this._ssh)
             } catch (e) {
                 throw e
             }
@@ -88,7 +85,12 @@ class Logger {
     }
 
     async _destroy() {
-        await this._db.disconnect()
+        if (this._db) {
+            await this._db.disconnect()
+        }
+        if (this._ssh) {
+            await this._ssh.disconnect()
+        }
     }
 
     /**
