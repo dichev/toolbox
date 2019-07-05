@@ -3,48 +3,33 @@
 const MySQLClient = require('../tools/MySQL');
 const SSHClient = require('../tools/SSHClient')
 
+// this._config = {
+//     "logging": {
+//         "mysql": {
+//             "host": "127.0.0.1",
+//             "user": "root",
+//             "password": "",
+//             "database": "envs",
+//             "ssh": false
+//         }
+//     }
+// };
 class Logger {
     /**
      * @param config
      */
     constructor(config){
         this._config = config;
-        // this._config = {
-        //     "logging": {
-        //         "mysql": {
-        //             "host": "127.0.0.1",
-        //             "user": "root",
-        //             "password": "",
-        //             "database": "envs",
-        //             "ssh": false
-        //         }
-        //     }
-        // };
         this.hasMySQLLog = !!this._config.logging.mysql;
         this._db = null;
         this._ssh = null
         this._dbRecordId = null;
     }
 
-    async start(){
+    async start(info){
         console.log('#Deployer start at:', new Date());
 
         await this._prepare()
-
-        let info = {
-            startAt: this._getDateTime(),
-            endAt: null,
-            status: 'IN_PROGRESS',
-            product: this._config.product,
-            action: this._config.action,
-            environment: this._config.env,
-            provider: this._config.provider,
-            version: this._config.tag,
-            user: (process.env['USERNAME'] + ' (' + process.env['COMPUTERNAME'] + ')'),
-            // ip: ip.address(),
-            // errors: null,
-            debugInfo: 'deployer ' + process.argv.slice(2).join(' ')
-        };
 
         await this._log(info);
     }

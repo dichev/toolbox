@@ -18,6 +18,7 @@ const SSHClient = require('./tools/SSHClient')
 const console = require('./lib/Console')
 const colors = require('chalk')
 const Pattern = require('./lib/Pattern')
+const Logger = require('./lib/Logger')
 const Chain = require('./lib/Chain')
 const Chat = require('./plugins/GoogleChat')
 const commander = require('commander')
@@ -29,7 +30,7 @@ const fs = require('fs')
 
 class Program {
     
-    constructor({chat = null, smartForce = false } = {}) {
+    constructor({chat = null, smartForce = false, logging = null } = {}) {
  
         /** @type Params **/
         this.params = null
@@ -45,6 +46,7 @@ class Program {
         
         /** @var GoogleChat **/
         this.chat = new Chat(chat, this.name.command + new Date().toJSON().slice(0, 10), false)
+        this.logger = new Logger(logging)
     
         process.on('uncaughtException', (err) => this._errorHandler(err))
         process.on('unhandledRejection', (reason) => this._errorHandler(reason))
@@ -354,6 +356,21 @@ class Program {
                 icon: this._icon || Chat.icons.GEAR,
                 // buttons: [{ text: 'see code', url: link }]
             })
+
+            let info = {
+                startAt: new Date(),
+                endAt: null,
+                status: 'IN_PROGRESS',
+                // product: this._config.product,
+                action: this.name.command + ' ' + this.name.action + (this.params.rev || this.params.tag || this.params.version || ''),
+                environment: this.params, // change this
+                // provider: this._config.provider,
+                version: this.params.version,
+                user: (process.env['USERNAME'] + ' (' + process.env['COMPUTERNAME'] + ')'),
+                debugInfo: 'deployer ' + process.argv.slice(2).join(' ') + 'by ' + (process.env.DOPAMINE_SSH_USER || os.userInfo().username)
+            };
+
+            await this.logger.start(info)
             
             if (delay) {
                 await this.sleep(delay, 'Waiting..')
@@ -366,6 +383,7 @@ class Program {
     async _after(){
         if(!this.params.quiet) {
             await this.chat.message(`✓ Finished!`, {color: 'green', silent: true })
+            await this.logger.end(0, 'Finished')
         }
     }
     
@@ -507,6 +525,7 @@ class Program {
             this.destroy()
             msg = msg.replace(ansiRegex(), '').replace(/\n/g, '<br/>')
             this.chat.error(`${this.name.action} | Aborting due error`, msg, {silent: true, popup: true}).catch(console.error)
+            this.logger.end(1, 'Aborting due error: ' + console.error)
             setTimeout(() => process.exit(1), 1500)
         } else {
             console.log('Please see --help')
