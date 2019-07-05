@@ -20,7 +20,7 @@ class Logger {
      */
     constructor(config){
         this._config = config;
-        this.hasMySQLLog = !!this._config.logging.mysql;
+        this.hasMySQLLog = !!this._config.mysql;
         this._db = null;
         this._ssh = null
         this._dbRecordId = null;

@@ -30,7 +30,7 @@ const fs = require('fs')
 
 class Program {
     
-    constructor({chat = null, smartForce = false, logging = null } = {}) {
+    constructor({chat = null, smartForce = false, logs = null } = {}) {
  
         /** @type Params **/
         this.params = null
@@ -46,7 +46,7 @@ class Program {
         
         /** @var GoogleChat **/
         this.chat = new Chat(chat, this.name.command + new Date().toJSON().slice(0, 10), false)
-        this.logger = new Logger(logging)
+        this.logger = new Logger(logs)
     
         process.on('uncaughtException', (err) => this._errorHandler(err))
         process.on('unhandledRejection', (reason) => this._errorHandler(reason))
