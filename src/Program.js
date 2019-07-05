@@ -371,8 +371,6 @@ class Program {
                 debugInfo: JSON.stringify(this.params),
             })
 
-            await this.logger.start(info)
-            
             if (delay) {
                 await this.sleep(delay, 'Waiting..')
                 await this.chat.message('Executing..', { popup: true })
