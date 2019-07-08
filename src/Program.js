@@ -363,29 +363,29 @@ class Program {
                 (this.params.rev || this.params.tag || this.params.version || '') +
                 ' ' + process.argv.slice(2).join(' ')
 
-            await this.logger.start({
-                startAt: new Date(),
-                endAt: null,
-                status: 'IN_PROGRESS',
-                action: action,
-                jiraTicketId: 'https://jira.dopamine.bg/browse/' + this.params.jiraTicketId || null,
-                user: this._deployUser,
-                debugInfo: JSON.stringify(this.params),
-            })
-
             if (delay) {
                 await this.sleep(delay, 'Waiting..')
                 await this.chat.message('Executing..', { popup: true })
             }
         }
+
+        await this.logger.start({
+            startAt: new Date(),
+            endAt: null,
+            status: 'IN_PROGRESS',
+            action: action,
+            jiraTicketId: 'https://jira.dopamine.bg/browse/' + this.params.jiraTicketId || null,
+            user: this._deployUser,
+            debugInfo: JSON.stringify(this.params),
+        })
     }
     
     
     async _after(){
         if(!this.params.quiet) {
             await this.chat.message(`✓ Finished!`, {color: 'green', silent: true })
-            await this.logger.end(0, 'Finished')
         }
+        await this.logger.end(0, 'Finished')
     }
     
     async confirm(question, def = 'yes', expect = ['yes', 'y']) {
