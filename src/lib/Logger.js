@@ -53,8 +53,10 @@ class Logger {
      * @private
      */
     async _log(info){
+        if (!this._db) console.error( 'No db initialised!' )
+
         // Write to mySQL log
-        if(this.hasMySQLLog) {
+        if(this.hasMySQLLog && this._db) {
             let sql = !this._dbRecordId ? 'INSERT INTO `deploy_log` SET ?' : 'UPDATE `deploy_log` SET ? WHERE id = ' + this._dbRecordId;
             let result = await this._db.query(sql, info)
             if(result && result.insertId) this._dbRecordId = result.insertId;
