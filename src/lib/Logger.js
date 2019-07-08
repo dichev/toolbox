@@ -4,15 +4,13 @@ const MySQLClient = require('../tools/MySQL');
 const SSHClient = require('../tools/SSHClient')
 
 // this._config = {
-//     "logging": {
-//         "mysql": {
-//             "host": "127.0.0.1",
-//             "user": "root",
-//             "password": "",
-//             "database": "envs",
-//             "ssh": false
-//         }
-//     }
+//    "mysql": {
+//        "host": "127.0.0.1",
+//        "user": "root",
+//        "password": "",
+//        "database": "envs",
+//        "ssh": false
+//    }
 // };
 class Logger {
     /**

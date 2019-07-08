@@ -136,6 +136,7 @@ class Program {
             .option('--wait <int>', 'Pause between iterations in seconds')
             .option('--announce [text]', 'Announce what and why is happening. If there is no [text] value then it will be asked interactively (useful for avoiding escaping issues)')
             .option('--delayed [minutes]', 'Delay starting of the command (useful in combination with announce)')
+            .option('--jiraTicketId [text]', 'Jira ticket id is used for logging purposes.')
             .option('--no-chat', 'Disable chat notification if they are activated')
 
         commander.usage(this._usage)
@@ -281,12 +282,6 @@ class Program {
     }
     
     async _before(){
-        // If logging is enabled, we need the jira ticket id and username
-        if(this.logger) {
-            this.params.ticketId   = await this.ask('Jira ticketId', null, 2)
-            this.params.deployUser = await this.ask('Who are you(username)?', null, 2)
-        }
-
         if(!this.params.quiet) {
             let parts = process.argv[1].replace(/\\/g, '/').split('/')
             let file = parts.slice(parts.length - 3).join('/')
@@ -372,8 +367,8 @@ class Program {
                 endAt: null,
                 status: 'IN_PROGRESS',
                 action: action,
-                jiraTicketId: 'https://jira.dopamine.bg/browse/' + this.params.ticketId || null,
-                user: this.params.deployUser ? this.params.deployUser : process.env['USERNAME'] + ' (' + process.env['COMPUTERNAME'] + ') ' + (process.env.DOPAMINE_SSH_USER || ''),
+                jiraTicketId: 'https://jira.dopamine.bg/browse/' + this.params.jiraTicketId || null,
+                user: process.env.deployUser ? process.env.deployUser : process.env['USERNAME'] + ' (' + process.env['COMPUTERNAME'] + ') ' + (process.env.DOPAMINE_SSH_USER || ''),
                 debugInfo: JSON.stringify(this.params),
             })
 

@@ -19,6 +19,7 @@ The additional options of each tool is (partially) documented only inside their 
     * **[Cloudflare](#Cloudflare)**
 * **[Lib](#Lib)**
     * **[Console](#Console)**
+    * **[Logger](#Logger)**
 * **[Known Issues](#Known Issues)**
 
 ## Usage
@@ -368,6 +369,30 @@ If you don't want to include it in each module, then you can just override the j
 ```javascript
 require('dopamine-toolbox').lib.console.upgrade()
 ```
+
+
+#### <a name="Logger"></a>Logger
+This is class which used to log deploy info in database.
+You can use it separately, but its implemented in Program.js, in order to be used in automation project to log the deploy process.
+```javascript
+// variant 1
+new Program({logs: cfg.logs})
+
+// variant 2
+let config = {    
+    "mysql": {
+       "host": "127.0.0.1",
+       "user": "root",
+       "password": "",
+       "database": "envs",
+       "ssh": false
+    }
+};
+let logger = new Logger(config)
+logger.start(info)
+logger.end(exitCode, msg)
+```
+You need to setup a database in order to use the database. You can find schema & seed in **./.db/deploy_log.sql**
 
 
 ## <a name="Known Issues"></a>Known Issues
