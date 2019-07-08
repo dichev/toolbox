@@ -372,7 +372,7 @@ class Program {
             action: 'node ' + this.name.command + '/' + this.name.action +
                 (this.params.rev || this.params.tag || this.params.version || '') +
                 ' ' + process.argv.slice(2).join(' '),
-            jiraTicketId: 'https://jira.dopamine.bg/browse/' + this.params.jiraTicketId || null,
+            jiraTicketId: this.params.jiraTicketId ? 'https://jira.dopamine.bg/browse/' + this.params.jiraTicketId : null,
             user: this._deployUser,
             debugInfo: JSON.stringify(this.params),
         })
