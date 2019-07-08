@@ -18,6 +18,7 @@ const SSHClient = require('./tools/SSHClient')
 const console = require('./lib/Console')
 const colors = require('chalk')
 const Pattern = require('./lib/Pattern')
+const Logger = require('./lib/Logger')
 const Chain = require('./lib/Chain')
 const Chat = require('./plugins/GoogleChat')
 const commander = require('commander')
@@ -29,7 +30,7 @@ const fs = require('fs')
 
 class Program {
     
-    constructor({chat = null, smartForce = false } = {}) {
+    constructor({chat = null, smartForce = false, logs = {} } = {}) {
  
         /** @type Params **/
         this.params = null
@@ -42,9 +43,11 @@ class Program {
         this._requiredFlags = []
         this._smartForce = smartForce
         this.isRun = false
-        
+        this._deployUser = (logs && logs.deployUser) ? logs.deployUser : (process.env.DOPAMINE_SSH_USER || os.userInfo().username)
+
         /** @var GoogleChat **/
         this.chat = new Chat(chat, this.name.command + new Date().toJSON().slice(0, 10), false)
+        this.logger = new Logger(logs)
     
         process.on('uncaughtException', (err) => this._errorHandler(err))
         process.on('unhandledRejection', (reason) => this._errorHandler(reason))
@@ -134,8 +137,9 @@ class Program {
             .option('--wait <int>', 'Pause between iterations in seconds')
             .option('--announce [text]', 'Announce what and why is happening. If there is no [text] value then it will be asked interactively (useful for avoiding escaping issues)')
             .option('--delayed [minutes]', 'Delay starting of the command (useful in combination with announce)')
+            .option('--jiraTicketId [text]', 'Jira ticket id is used for logging purposes.')
             .option('--no-chat', 'Disable chat notification if they are activated')
-    
+
         commander.usage(this._usage)
         if (this._exampleUsage) {
             commander.on('--help', () => {
@@ -347,19 +351,31 @@ class Program {
             await this.chat.message('`' + code + '`' + (link ? ` <${link}|see code>` : ''), { silent: true })
             await this.chat.announce(msg, {
                 title: titleCase(this.name.command + ' ' + this.name.action) + ' ' + (this.params.rev || this.params.tag || this.params.version || ''),
-                subtitle: 'by ' + (process.env.DOPAMINE_SSH_USER || os.userInfo().username),
+                subtitle: 'by ' + this._deployUser,
                 silent: true,
                 popup: true,
                 bold: false,
                 icon: this._icon || Chat.icons.GEAR,
                 // buttons: [{ text: 'see code', url: link }]
             })
-            
+
             if (delay) {
                 await this.sleep(delay, 'Waiting..')
                 await this.chat.message('Executing..', { popup: true })
             }
         }
+
+        await this.logger.start({
+            startAt: new Date(),
+            endAt: null,
+            status: 'IN_PROGRESS',
+            action: 'node ' + this.name.command + '/' + this.name.action +
+                (this.params.rev || this.params.tag || this.params.version || '') +
+                ' ' + process.argv.slice(2).join(' '),
+            jiraTicketId: this.params.jiraTicketId ? 'https://jira.dopamine.bg/browse/' + this.params.jiraTicketId : null,
+            user: this._deployUser,
+            debugInfo: JSON.stringify(this.params),
+        })
     }
     
     
@@ -367,6 +383,7 @@ class Program {
         if(!this.params.quiet) {
             await this.chat.message(`✓ Finished!`, {color: 'green', silent: true })
         }
+        await this.logger.end(0, 'Finished')
     }
     
     async confirm(question, def = 'yes', expect = ['yes', 'y']) {
@@ -507,6 +524,7 @@ class Program {
             this.destroy()
             msg = msg.replace(ansiRegex(), '').replace(/\n/g, '<br/>')
             this.chat.error(`${this.name.action} | Aborting due error`, msg, {silent: true, popup: true}).catch(console.error)
+            this.logger.end(1, 'Aborting due error: ' + console.error)
             setTimeout(() => process.exit(1), 1500)
         } else {
             console.log('Please see --help')
