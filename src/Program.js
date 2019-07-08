@@ -43,7 +43,8 @@ class Program {
         this._requiredFlags = []
         this._smartForce = smartForce
         this.isRun = false
-        
+        this._deployUser = (logs && logs.deployUser) ? logs.deployUser : (process.env.DOPAMINE_SSH_USER || os.userInfo().username)
+
         /** @var GoogleChat **/
         this.chat = new Chat(chat, this.name.command + new Date().toJSON().slice(0, 10), false)
         this.logger = new Logger(logs)
@@ -350,7 +351,7 @@ class Program {
             await this.chat.message('`' + code + '`' + (link ? ` <${link}|see code>` : ''), { silent: true })
             await this.chat.announce(msg, {
                 title: titleCase(this.name.command + ' ' + this.name.action) + ' ' + (this.params.rev || this.params.tag || this.params.version || ''),
-                subtitle: 'by ' + (process.env.DOPAMINE_SSH_USER || os.userInfo().username),
+                subtitle: 'by ' + this._deployUser,
                 silent: true,
                 popup: true,
                 bold: false,
@@ -368,7 +369,7 @@ class Program {
                 status: 'IN_PROGRESS',
                 action: action,
                 jiraTicketId: 'https://jira.dopamine.bg/browse/' + this.params.jiraTicketId || null,
-                user: process.env.deployUser ? process.env.deployUser : process.env['USERNAME'] + ' (' + process.env['COMPUTERNAME'] + ') ' + (process.env.DOPAMINE_SSH_USER || ''),
+                user: this._deployUser,
                 debugInfo: JSON.stringify(this.params),
             })
 
