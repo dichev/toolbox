@@ -359,10 +359,6 @@ class Program {
                 // buttons: [{ text: 'see code', url: link }]
             })
 
-            let action = 'node ' + this.name.command + '/' + this.name.action +
-                (this.params.rev || this.params.tag || this.params.version || '') +
-                ' ' + process.argv.slice(2).join(' ')
-
             if (delay) {
                 await this.sleep(delay, 'Waiting..')
                 await this.chat.message('Executing..', { popup: true })
@@ -373,7 +369,9 @@ class Program {
             startAt: new Date(),
             endAt: null,
             status: 'IN_PROGRESS',
-            action: action,
+            action: 'node ' + this.name.command + '/' + this.name.action +
+                (this.params.rev || this.params.tag || this.params.version || '') +
+                ' ' + process.argv.slice(2).join(' '),
             jiraTicketId: 'https://jira.dopamine.bg/browse/' + this.params.jiraTicketId || null,
             user: this._deployUser,
             debugInfo: JSON.stringify(this.params),
