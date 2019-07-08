@@ -53,13 +53,17 @@ class Logger {
      * @private
      */
     async _log(info){
-        if (!this._db) console.error( 'No db initialised!' )
+        if (!this._db) console.log( 'Logger: No db initialised!' )
 
         // Write to mySQL log
         if(this.hasMySQLLog && this._db) {
-            let sql = !this._dbRecordId ? 'INSERT INTO `deploy_log` SET ?' : 'UPDATE `deploy_log` SET ? WHERE id = ' + this._dbRecordId;
-            let result = await this._db.query(sql, info)
-            if(result && result.insertId) this._dbRecordId = result.insertId;
+            try {
+                let sql = !this._dbRecordId ? 'INSERT INTO `deploy_log` SET ?' : 'UPDATE `deploy_log` SET ? WHERE id = ' + this._dbRecordId;
+                let result = await this._db.query(sql, info)
+                if(result && result.insertId) this._dbRecordId = result.insertId;
+            } catch (e) {
+                console.log(e)
+            }
         }
         return this._dbRecordId
     }
@@ -78,7 +82,7 @@ class Logger {
             try {
                 this._db = await client.connect(this._config.mysql, this._ssh)
             } catch (e) {
-                throw e
+                console.error(e)
             }
         }
         return this._db
