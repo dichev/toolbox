@@ -137,7 +137,7 @@ class Program {
             .option('--wait <int>', 'Pause between iterations in seconds')
             .option('--announce [text]', 'Announce what and why is happening. If there is no [text] value then it will be asked interactively (useful for avoiding escaping issues)')
             .option('--delayed [minutes]', 'Delay starting of the command (useful in combination with announce)')
-            .option('--jiraTicketId [text]', 'Jira ticket id is used for logging purposes.')
+            .option('--jira [text]', 'Jira ticket id is used for logging purposes.')
             .option('--no-chat', 'Disable chat notification if they are activated')
 
         commander.usage(this._usage)

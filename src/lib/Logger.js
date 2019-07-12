@@ -1,6 +1,6 @@
-'use strict';
+'use strict'
 
-const MySQLClient = require('../tools/MySQL');
+const MySQLClient = require('../tools/MySQL')
 const SSHClient = require('../tools/SSHClient')
 
 // this._config = {
@@ -11,23 +11,26 @@ const SSHClient = require('../tools/SSHClient')
 //        "database": "envs",
 //        "ssh": false
 //    }
-// };
+// }
 class Logger {
     /**
      * @param config
      */
     constructor(config){
-        this._config = config;
-        this.hasMySQLLog = !!this._config.mysql;
-        this._db = null;
+        this.enabled = !!config
+        this._config = config
+        this.hasMySQLLog = this.enabled
+        this._db = null
         this._ssh = null
-        this._dbRecordId = null;
+        this._dbRecordId = null
     }
 
     async start(info){
+        if (!this.enabled) return
+
         await this._prepare()
 
-        await this._log(info);
+        await this._log(info)
     }
 
     /**
@@ -36,16 +39,17 @@ class Logger {
      * @returns {*}
      */
     async end(exitCode, msg){
+        if (!this.enabled) return
 
-        let status = ['SUCCESS', 'ERROR', 'ABORT'][exitCode];
+        let status = ['SUCCESS', 'ERROR', 'ABORT'][exitCode]
         let info = {
             status: status,
             message: msg,
             endAt: this._getDateTime()
-        };
+        }
 
-        await this._log(info);
-        await this._destroy();
+        await this._log(info)
+        await this._destroy()
     }
 
     /**
@@ -58,9 +62,9 @@ class Logger {
         // Write to mySQL log
         if(this.hasMySQLLog && this._db) {
             try {
-                let sql = !this._dbRecordId ? 'INSERT INTO `deploy_log` SET ?' : 'UPDATE `deploy_log` SET ? WHERE id = ' + this._dbRecordId;
+                let sql = !this._dbRecordId ? 'INSERT INTO `deploy_log` SET ?' : 'UPDATE `deploy_log` SET ? WHERE id = ' + this._dbRecordId
                 let result = await this._db.query(sql, info)
-                if(result && result.insertId) this._dbRecordId = result.insertId;
+                if(result && result.insertId) this._dbRecordId = result.insertId
             } catch (e) {
                 console.log(e)
             }
@@ -78,7 +82,7 @@ class Logger {
                 this._ssh = await new SSHClient().connect({host: this._config.mysql.host, username: 'root'})
             }
 
-            let client = new MySQLClient();
+            let client = new MySQLClient()
             try {
                 this._db = await client.connect(this._config.mysql, this._ssh)
             } catch (e) {
@@ -102,8 +106,8 @@ class Logger {
      * @private
      */
     _getDateTime(){
-        return new Date()
+        return new Date().toISOString().slice(0, 19).replace('T', ' ')
     }
 }
 
-module.exports = Logger;
+module.exports = Logger
