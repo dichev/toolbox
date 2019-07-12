@@ -30,7 +30,7 @@ const fs = require('fs')
 
 class Program {
     
-    constructor({chat = null, smartForce = false, logs = {} } = {}) {
+    constructor({chat = null, smartForce = false, logs = null } = {}) {
  
         /** @type Params **/
         this.params = null
