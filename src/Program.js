@@ -49,8 +49,8 @@ class Program {
         this.chat = new Chat(chat, this.name.command + new Date().toJSON().slice(0, 10), false)
         this.logger = new Logger(logs)
     
-        process.on('uncaughtException', (err) => this._errorHandler(err))
-        process.on('unhandledRejection', (reason) => this._errorHandler(reason))
+        process.on('uncaughtException', async (err) => await this._uncaughtHandler(err, 'uncaughtException'))
+        process.on('unhandledRejection', async (reason) => await this._uncaughtHandler(reason, 'unhandledRejection'))
     }
     
     /**
@@ -513,10 +513,12 @@ class Program {
     
     /**
      * @param {Error} err
+     * @param {String} type
      * @private
      */
-    _errorHandler(err) {
+    async _errorHandler(err, type) {
         let msg = err.message || err.toString()
+        if(type) msg = type + ' | ' + msg
         console.error(msg)
         if(err.stack) console.verbose(err.stack)
         
@@ -525,11 +527,25 @@ class Program {
             msg = msg.replace(ansiRegex(), '').replace(/\n/g, '<br/>')
             this.chat.error(`${this.name.action} | Aborting due error`, msg, {silent: true, popup: true}).catch(console.error)
             this.logger.end(1, 'Aborting due error: ' + console.error)
-            setTimeout(() => process.exit(1), 1500)
+    
+            await new Promise((resolve) => setTimeout(() => process.exit(1), 1000))
         } else {
             console.log('Please see --help')
             process.exit(1)
         }
+    }
+    
+    /**
+     * @param {Error} err
+     * @param {string} type
+     * @private
+     */
+    async _uncaughtHandler(err, type) {
+        console.warn(`WARNING! Found ${type}, during catching/handling such error the execution will continue for a short period and this could be kind of dangerous!`)
+        // proccess.exit(1) // if we just stop the process here we will have an illusion of control - even if the process is stopped asap, the next events/promises would still be in execiting state causing unpredictable behavouir. This happens most likelye due forgotten await statement without catcher
+        
+        // redirect it to the error handler to at least track the error
+        this._errorHandler(err).then(() => console.log('yeah')).catch((err) => console.error('nope', err))
     }
     
 }
