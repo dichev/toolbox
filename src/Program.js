@@ -545,7 +545,7 @@ class Program {
         // proccess.exit(1) // if we just stop the process here we will have an illusion of control - even if the process is stopped asap, the next events/promises would still be in execiting state causing unpredictable behavouir. This happens most likelye due forgotten await statement without catcher
         
         // redirect it to the error handler to at least track the error
-        this._errorHandler(err).then(() => console.log('yeah')).catch((err) => console.error('nope', err))
+        await this._errorHandler(err, type)
     }
     
 }
