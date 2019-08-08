@@ -49,8 +49,8 @@ class Program {
         this.chat = new Chat(chat, this.name.command + new Date().toJSON().slice(0, 10), false)
         this.logger = new Logger(logs)
     
-        process.on('uncaughtException', async (err) => await this._uncaughtHandler(err, 'uncaughtException'))
-        process.on('unhandledRejection', async (reason) => await this._uncaughtHandler(reason, 'unhandledRejection'))
+        process.on('uncaughtException', async (err) => await this._uncaughtException(err))
+        process.on('unhandledRejection', async (reason) => await this._uncaughtRejection(reason))
     }
     
     /**
@@ -212,10 +212,10 @@ class Program {
      * @return {Program}
      */
     async run(fn) {
-        this.parse()
-        if (typeof fn !== 'function') throw Error(`Invalid arguments! Expected program.run(async function), received program.run(${typeof fn})`)
-    
         try {
+            this.parse()
+            if (typeof fn !== 'function') throw Error(`Invalid arguments! Expected program.run(async function), received program.run(${typeof fn})`)
+        
             this.isRun = true
             await this._before()
             await fn()
@@ -236,22 +236,24 @@ class Program {
      * @return {Program}
      */
     async iterate(loopBy, fn) {
-        this.parse()
-        
-        if (typeof fn !== 'function' || typeof loopBy !== 'string') throw Error(`Invalid arguments! Expected program.iterate(string, async function), received program.run(${loopBy}, ${typeof fn})`)
-        if(!this.params[loopBy]) throw Error(`Invalid parameter option:(${loopBy})! It's expected to be array and to be predefined as program option.`)
-    
-        let quiet = this.params.quiet || false
-        let parallel = this.params.parallel !== undefined
-        let parallelLimit = this.params.parallel || 0
-        let iterations = this.params[loopBy].split(',')
-    
-        if (this._smartForce && !this.params.force && iterations.length >= 3) {
-            let answer = await this.ask(`It seems there are ${iterations.length} iterations. Do you want to activate --force mode?`, ['yes', 'no'], 'yes')
-            if (answer === 'yes') this.params.force = true
-        }
-        
         try {
+            // Validations
+            this.parse()
+            
+            if (typeof fn !== 'function' || typeof loopBy !== 'string') throw Error(`Invalid arguments! Expected program.iterate(string, async function), received program.run(${loopBy}, ${typeof fn})`)
+            if(!this.params[loopBy]) throw Error(`Invalid parameter option:(${loopBy})! It's expected to be array and to be predefined as program option.`)
+        
+            let quiet = this.params.quiet || false
+            let parallel = this.params.parallel !== undefined
+            let parallelLimit = this.params.parallel || 0
+            let iterations = this.params[loopBy].split(',')
+        
+            if (this._smartForce && !this.params.force && iterations.length >= 3) {
+                let answer = await this.ask(`It seems there are ${iterations.length} iterations. Do you want to activate --force mode?`, ['yes', 'no'], 'yes')
+                if (answer === 'yes') this.params.force = true
+            }
+    
+            // Execution
             this.isRun = true
             await this._before()
             
@@ -523,7 +525,7 @@ class Program {
      * @param {String} type
      * @private
      */
-    async _errorHandler(err, type) {
+    async _errorHandler(err, type = '') {
         let msg = err.message || err.toString()
         if(type) msg = type + ' | ' + msg
         console.error(msg)
@@ -544,15 +546,21 @@ class Program {
     
     /**
      * @param {Error} err
-     * @param {string} type
      * @private
      */
-    async _uncaughtHandler(err, type) {
+    async _uncaughtRejection(err, type) {
         console.warn(`WARNING! Found ${type}, during catching/handling such error the execution will continue for a short period and this could be kind of dangerous!`)
         // proccess.exit(1) // if we just stop the process here we will have an illusion of control - even if the process is stopped asap, the next events/promises would still be in execiting state causing unpredictable behavouir. This happens most likelye due forgotten await statement without catcher
         
         // redirect it to the error handler to at least track the error
-        await this._errorHandler(err, type)
+        await this._errorHandler(err, 'uncaughtPromiseRejection')
+    }
+    /**
+     * @param {Error} err
+     * @private
+     */
+    async _uncaughtException(err, type) {
+        await this._errorHandler(err, 'uncaughtException')
     }
     
 }
