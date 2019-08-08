@@ -20,12 +20,18 @@ const DRY_RUN = (process.argv.findIndex(arg => arg === '--dry-run') !== -1)
 
 class MySQL {
     
-    constructor() {
+    /**
+     * @param {Object} [options]
+     * @param {bool}   [options.withFieldsInfo=false] - every query will return not only the fetched rows, but also the fields additional details - used for backward compatibility
+     */
+    constructor({withFieldsInfo = false} = {}) {
         /** @type PromiseConnection **/
         this._db = null
         this._ssh = null
         this._dbName = null
         this._prefix = '[mysql]'
+        
+        this._withFieldsInfo = withFieldsInfo
         
         this._thresholds = {
             enabled: false,
@@ -108,12 +114,30 @@ class MySQL {
         let [rows, fields] = await this._db.query(SQL, params)
         
         v('Result: ' + (rows.length || 0) + ' rows')
+        
+        if(this._withFieldsInfo) { // used for backward compatibility on old applications
+            return [rows, fields]
+        }
+        
         return rows
     }
     
     async dump({exportSchema = true, exportData = false, sortKeys = false, maxChunkSize = 1000, dest = null, modifiers = [], excludeTables = [], includeTables = [], excludeColumns = {}, reorderColumns = {}}){
         let dumper = new MySQLDumper(this.getConnection())
         return await dumper.dump({exportSchema, exportData, sortKeys, maxChunkSize, dest, modifiers, excludeTables, includeTables, excludeColumns, reorderColumns})
+    }
+    
+    
+    async beginTransaction() {
+        return await this._db.beginTransaction()
+    }
+    
+    async commit(){
+        return await this._db.commit()
+    }
+    
+    async rollback(){
+        return await this._db.rollback()
     }
     
     /**

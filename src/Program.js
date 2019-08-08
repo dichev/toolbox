@@ -82,6 +82,13 @@ class Program {
     }
     
     /**
+     * @return Array<string>
+     */
+    get args(){
+        return commander.args
+    }
+    
+    /**
      * @param {string} flags
      * @param {string} [description]
      * @param {string} [options]
