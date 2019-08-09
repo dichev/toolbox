@@ -45,7 +45,7 @@ class Program {
         this.isRun = false
         this._deployUser = (logs && logs.deployUser) ? logs.deployUser : (process.env.DOPAMINE_SSH_USER || os.userInfo().username)
 
-        /** @var GoogleChat **/
+        /** @type GoogleChat **/
         this.chat = new Chat(chat, this.name.command + new Date().toJSON().slice(0, 10), false)
         this.logger = new Logger(logs)
     
@@ -293,7 +293,7 @@ class Program {
         this.isRun = true
         
         if(!this.params.quiet) {
-            let link = this.getCommandSourceCodeUrl()
+            let link = this.chat.enabled ? this.getCommandSourceCodeUrl() : null
             let args = process.argv.slice(2).map(a=>a.includes(' ') ? '"' + a + '"': a).join(' ')
             let code = `$ ${this.name.command} ${this.name.action} ${args}`
             let delay = 0
