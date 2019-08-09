@@ -216,11 +216,10 @@ class Program {
             this.parse()
             if (typeof fn !== 'function') throw Error(`Invalid arguments! Expected program.run(async function), received program.run(${typeof fn})`)
         
-            this.isRun = true
             await this._before()
             await fn()
-            await this._after()
             this.destroy()
+            await this._after()
         }
         catch (err) {
             await this._errorHandler(err)
@@ -254,7 +253,6 @@ class Program {
             }
     
             // Execution
-            this.isRun = true
             await this._before()
             
             if(parallel){
@@ -291,6 +289,9 @@ class Program {
     }
     
     async _before(){
+        if(this.isRun) throw Error('The program is already running. Please avoid executing program.run() or program.iterate() again during their execution')
+        this.isRun = true
+        
         if(!this.params.quiet) {
             let parts = process.argv[1].replace(/\\/g, '/').split('/')
             let file = parts.slice(parts.length - 3).join('/')
@@ -392,6 +393,7 @@ class Program {
             await this.chat.message(`✓ Finished!`, {color: 'green', silent: true })
         }
         await this.logger.end(0, 'Finished')
+        this.isRun = false
     }
     
     async confirm(question, def = 'yes', expect = ['yes', 'y']) {
