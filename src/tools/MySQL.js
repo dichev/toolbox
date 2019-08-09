@@ -23,8 +23,9 @@ class MySQL {
     /**
      * @param {Object} [options]
      * @param {bool}   [options.withFieldsInfo=false] - every query will return not only the fetched rows, but also the fields additional details - used for backward compatibility
+     * @param {bool}   [options.autoDetectWarnings=false] - Experimental feature: displays mysql warnings after each query
      */
-    constructor({withFieldsInfo = false} = {}) {
+    constructor({withFieldsInfo = false, autoDetectWarnings = false } = {}) {
         /** @type PromiseConnection **/
         this._db = null
         this._ssh = null
@@ -32,6 +33,7 @@ class MySQL {
         this._prefix = '[mysql]'
         
         this._withFieldsInfo = withFieldsInfo
+        this._autoDetectWarnings = autoDetectWarnings
         
         this._thresholds = {
             enabled: false,
@@ -111,15 +113,44 @@ class MySQL {
         
         if(this._thresholds.enabled) await this._waitOnHighLoad()
         
-        let [rows, fields] = await this._db.query(SQL, params)
-        
+        let res = await this._db.query(SQL, params)
+        let [rows, fields] = res
         v('Result: ' + (rows.length || 0) + ' rows')
         
+        if(this._autoDetectWarnings) { // experimental feature
+            await this.detectWarnings(res, SQL)
+        }
+    
         if(this._withFieldsInfo) { // used for backward compatibility on old applications
-            return [rows, fields]
+            return res
         }
         
         return rows
+    }
+    
+    /**
+     * @param {array} res - raw result from mysql2 lib
+     * @param {string} SQL - optional queried sql to be displayed near the warning
+     * @return {Promise<void>}
+     */
+    async detectWarnings(res, SQL = ''){
+        let [rows, fields] = res
+        
+        let hasWarnings = false
+        if (!Array.isArray(rows)) rows = [rows] // when is not multi-query and is UPDATE/DELETE/INSERT then the result is returned as object
+        for (let r of rows) {
+            if (r.constructor.name === 'ResultSetHeader') {
+                if (r.warningStatus > 0) {
+                    console.warn(this._prefix + `Detected ${r.warningStatus} warnings from last query: "` + SQL.trim().substr(0, 50) + '"..')
+                    hasWarnings = true
+                }
+                v(this._prefix + r.info)
+            }
+        }
+        if (hasWarnings) {
+            let [warnings] = await this._db.query('SHOW WARNINGS')
+            for (let w of warnings) console.warn(this._prefix + '- ' + w.Message)
+        }
     }
     
     async dump({exportSchema = true, exportData = false, sortKeys = false, maxChunkSize = 1000, dest = null, modifiers = [], excludeTables = [], includeTables = [], excludeColumns = {}, reorderColumns = {}}){
