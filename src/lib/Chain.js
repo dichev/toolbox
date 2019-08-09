@@ -7,15 +7,16 @@ class Chain {
     /**
      * @param {int} limit=1
      * @param {int} delay=0 - specify delay in seconds between every next promise. Used for throttling reasons
-     * @param {Array<Function>} fnPromises - array of functions which returns promises
+     * @param {Array} array - iterative array that contains a list of values to be passed as value to the promise fn
+     * @param {Function} fn - function to be executed that return a promise
      * @return {Promise.<*>}
      */
-    static async parallelLimit(limit = 1, delay = 0, fnPromises) {
-        let chain = new Chain(fnPromises)
+    static async parallelLimitMap(limit = 1, delay = 0, array, fn) {
+        let fns = array.map(v => async () => await fn(v))
+        let chain = new Chain(fns)
         let results = await chain.parallelLimit(limit, delay)
         return results
     }
-    
     
     /**
      * @param {Array<Function>} fnPromises - array of functions which returns promises

@@ -259,11 +259,10 @@ class Program {
             
             if(parallel){
                 if (!quiet) console.log(colors.gray(`\n-- Running in parallel(${parallelLimit}): ${iterations} -----------------------------------------`))
-                let fnPromises = iterations.map(host => async () => {
-                    if (!quiet) await this.chat.message(`*Executing on ${host}*`, { silent: true })
+                await Chain.parallelLimitMap(parallelLimit, 0.100, iterations, async host => {
+                    if (!quiet) await this.chat.message(`*Executing on ${host}*`, {silent: true})
                     return fn(host)
                 })
-                await Chain.parallelLimit(parallelLimit, 0.100, fnPromises)
                 this.destroy() // TODO: could keep open a lot connections
             }
             else {
