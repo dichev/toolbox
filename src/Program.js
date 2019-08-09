@@ -293,10 +293,6 @@ class Program {
         this.isRun = true
         
         if(!this.params.quiet) {
-            let parts = process.argv[1].replace(/\\/g, '/').split('/')
-            let file = parts.slice(parts.length - 3).join('/')
-            if(!file.endsWith('.js')) file+= '.js'
-            
             let link = this.getCommandSourceCodeUrl()
             let args = process.argv.slice(2).map(a=>a.includes(' ') ? '"' + a + '"': a).join(' ')
             let code = `$ ${this.name.command} ${this.name.action} ${args}`
@@ -549,8 +545,8 @@ class Program {
      * @param {Error} err
      * @private
      */
-    async _uncaughtRejection(err, type) {
-        console.warn(`WARNING! Found ${type}, during catching/handling such error the execution will continue for a short period and this could be kind of dangerous!`)
+    async _uncaughtRejection(err) {
+        console.warn(`WARNING! Found uncaughtRejection of promise, during catching/handling such error the execution will continue for a short period and this could be kind of dangerous!`)
         // proccess.exit(1) // if we just stop the process here we will have an illusion of control - even if the process is stopped asap, the next events/promises would still be in execiting state causing unpredictable behavouir. This happens most likelye due forgotten await statement without catcher
         
         // redirect it to the error handler to at least track the error
@@ -560,7 +556,7 @@ class Program {
      * @param {Error} err
      * @private
      */
-    async _uncaughtException(err, type) {
+    async _uncaughtException(err) {
         await this._errorHandler(err, 'uncaughtException')
     }
     
