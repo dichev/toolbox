@@ -25,7 +25,7 @@ const commander = require('commander')
 const os = require('os')
 const isWin = os.platform() === 'win32'
 const titleCase = (str) => str.replace(/\b\S/g, t => t.toUpperCase())
-const ansiRegex = require('ansi-regex')
+const stripAnsi = require('strip-ansi')
 const fs = require('fs')
 
 class Program {
@@ -530,11 +530,14 @@ class Program {
         
         if(this.isRun) {
             this.destroy()
-            msg = msg.replace(ansiRegex(), '').replace(/\n/g, '<br/>')
-            this.chat.error(`${this.name.action} | Aborting due error`, msg, {silent: true, popup: true}).catch(console.error)
-            this.logger.end(1, 'Aborting due error: ' + console.error)
-    
-            await new Promise((resolve) => setTimeout(() => process.exit(1), 1000))
+            if(this.chat.enabled || this.logger.enabled) {
+                msg = stripAnsi(msg).replace(/\n/g, '<br/>')
+                this.chat.error(`${this.name.action} | Aborting due error`, msg, {silent: true, popup: true}).catch(console.error)
+                this.logger.end(1, 'Aborting due error: ' + console.error)
+                await new Promise((resolve) => setTimeout(() => process.exit(1), 1000))
+            } else {
+                process.exit(1)
+            }
         } else {
             console.log('Please see --help')
             process.exit(1)
