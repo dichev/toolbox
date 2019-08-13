@@ -16,6 +16,7 @@
     "mysql2": "^1.6.5",
     "node-fetch": "^2.3.0",
     "progress-stream": "^2.0.0",
-    "ssh2": "^0.8.2"
+    "ssh2": "^0.8.2",
+    "strip-ansi": "^5.2.0"
   }
 }
