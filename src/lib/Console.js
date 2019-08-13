@@ -32,11 +32,11 @@ class Console {
     }
     static warn(...args){
         _console.warn.apply(_console, args.map(a => colors.yellow(a)))
-        Console._emit('warn', ...args)
+        Console._emit('WARN', ...args)
     }
     static error(...args){
         _console.error.apply(_console, args.map(a => colors.red(a)))
-        Console._emit('error', ...args)
+        Console._emit('ERROR', ...args) // do not make it lowercase
     }
     
     
