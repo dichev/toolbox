@@ -12,8 +12,17 @@ const sqlTrim = (sql) => {
     sql = sql.trim().replace(/^(  )+/gm, '  ')
     let lines = sql.split(/\r\n|\r|\n/)
     let max = 30
-    if (lines.length > max) sql = lines.slice(0, max).join('\n') + `\n.. (${lines.length-max} more)`
+    if (lines.length > max) sql = lines.slice(0, max).join('\n') + `\n.. (${lines.length-max} lines more)`
     return sql
+}
+const sqlParamsTrim = (params) => {
+    if(!params || !params.length) return '[]'
+    let out = params.toString()
+    let max = 100
+    if(out.length > max) {
+        out = out.substr(0,max-5) + ` ..(${out.length-max} chars more).. ` + out.substr(out.length-5)
+    }
+    return `[${out}]`
 }
 
 const DRY_RUN = (process.argv.findIndex(arg => arg === '--dry-run') !== -1)
@@ -107,7 +116,7 @@ class MySQL {
     
     // TODO: implement --show-warnings
     async query(SQL, params = []){
-        v(`${this._prefix}\n` + sqlTrim(SQL) + (params.length ? `\n[${params||''}]` : ''))
+        v(`${this._prefix}\n` + sqlTrim(SQL) + '\n' + sqlParamsTrim(params))
         await this._protect(SQL)
         if(DRY_RUN) return []
         
