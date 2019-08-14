@@ -33,6 +33,10 @@ class SSHClient {
         this._silent = Boolean(v)
     }
     
+    get prefix() {
+        return this._prefix
+    }
+    
     
     /**
      * @param {object} cfg - see: https://www.npmjs.com/package/ssh2#client-methods

@@ -83,8 +83,9 @@ class MySQL {
             dateStrings: 'date',
             multipleStatements: true
         }
-        this._prefix = (DRY_RUN ? 'DRY RUN | `' : '') + colors.blue(`${user}@${host}`.padEnd(24) + ` | `)
-    
+        this._prefix = (DRY_RUN ? 'DRY RUN | `' : '') + (ssh ? ssh.prefix : '') + colors.blue(`${user}@${host}`.padEnd(24) + ` | `)
+        v(this._prefix + `Connecting to mysql..`);
+        
         if (ssh) {
             if(!password) {
                 let storedPass = await ssh.exec(`(cat .my.cnf | grep password) || echo ''`, { secret: true, allowInDryRun: true }) || ''
