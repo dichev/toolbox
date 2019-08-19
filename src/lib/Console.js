@@ -4,6 +4,7 @@
 const colors = require('chalk')
 const stripAnsi = require('strip-ansi')
 const EventEmitter = require('events').EventEmitter
+const inspect = require('util').inspect
 
 let verbose = (process.argv.findIndex(arg => arg === '-v' || arg === '--verbose') !== -1)
 
@@ -14,6 +15,14 @@ const _console = {
     error: console.error
 }
 
+const colorize = (args, color) => {
+    return args.map(arg => {
+        let str = typeof arg === 'string' ? arg : inspect(arg, {colors: true}) // convert object/array to string to be able to apply ansi colors
+        return colors[color](str) // apply the colors
+    })
+}
+
+
 /** @type module:events.internal.EventEmitter **/
 let _emitter = null
 
@@ -21,21 +30,21 @@ class Console {
     
     static verbose(...args){
         if (verbose) {
-            _console.log.apply(_console, args.map(a => colors.gray(a)))
+            _console.log.apply(_console, colorize(args, 'gray'))
         }
     }
     static log(...args){
         _console.log.apply(_console, args)
     }
     static info(...args){
-        _console.info.apply(_console, args.map(a => colors.white(a)))
+        _console.info.apply(_console, colorize(args, 'white'))
     }
     static warn(...args){
-        _console.warn.apply(_console, args.map(a => colors.yellow(a)))
+        _console.warn.apply(_console, colorize(args, 'yellow'))
         Console._emit('WARN', ...args)
     }
     static error(...args){
-        _console.error.apply(_console, args.map(a => colors.red(a)))
+        _console.error.apply(_console, colorize(args, 'red'))
         Console._emit('ERROR', ...args) // do not make it lowercase
     }
     
