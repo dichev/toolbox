@@ -32,9 +32,9 @@ class MySQL {
     /**
      * @param {Object} [options]
      * @param {bool}   [options.withFieldsInfo=false] - every query will return not only the fetched rows, but also the fields additional details - used for backward compatibility
-     * @param {bool}   [options.autoDetectWarnings=false] - Experimental feature: displays mysql warnings after each query
+     * @param {bool}   [options.autoDetectWarnings=true] - Experimental feature: displays mysql warnings after each query
      */
-    constructor({withFieldsInfo = false, autoDetectWarnings = false } = {}) {
+    constructor({withFieldsInfo = false, autoDetectWarnings = true } = {}) {
         /** @type PromiseConnection **/
         this._db = null
         this._ssh = null
@@ -115,7 +115,7 @@ class MySQL {
         return this
     }
     
-    // TODO: implement --show-warnings
+
     async query(SQL, params = []){
         v(`${this._prefix}\n` + sqlTrim(SQL) + '\n' + sqlParamsTrim(params))
         await this._protect(SQL)
