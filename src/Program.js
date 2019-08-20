@@ -42,6 +42,7 @@ class Program {
         this._dryRun = false
         this._requiredFlags = []
         this._smartForce = smartForce
+        this._interruptCounter = 0
         this.isRun = false
         this._deployUser = (logs && logs.deployUser) ? logs.deployUser : (process.env.DOPAMINE_SSH_USER || os.userInfo().username)
 
@@ -51,6 +52,7 @@ class Program {
     
         process.on('uncaughtException', async (err) => await this._uncaughtException(err))
         process.on('unhandledRejection', async (reason) => await this._uncaughtRejection(reason))
+        process.on('SIGINT', async () => await this._onInterruptSignal());
     }
     
     /**
@@ -534,7 +536,7 @@ class Program {
                 msg = stripAnsi(msg).replace(/\n/g, '<br/>')
                 this.chat.error(`${this.name.action} | Aborting due error`, msg, {silent: true, popup: true}).catch(console.error)
                 this.logger.end(1, 'Aborting due error: ' + console.error)
-                await new Promise((resolve) => setTimeout(() => process.exit(1), 1000))
+                await new Promise((resolve) => setTimeout(() => process.exit(1), 1000)) // TODO: the chat and logger should be in parent process to avoid this timeout
             } else {
                 process.exit(1)
             }
@@ -555,12 +557,27 @@ class Program {
         // redirect it to the error handler to at least track the error
         await this._errorHandler(err, 'uncaughtPromiseRejection')
     }
+    
     /**
      * @param {Error} err
      * @private
      */
     async _uncaughtException(err) {
         await this._errorHandler(err, 'uncaughtException')
+    }
+    
+    /**
+     * @param {Error} err
+     * @private
+     */
+    async _onInterruptSignal(err) {
+        if (++this._interruptCounter <= 1) {
+            console.warn('Caught interrupt signal, aborting gracefully (press again in emergency)');
+            await this._errorHandler(new Error('Aborted by user (ctrl + c)'))
+        } else {
+            console.warn('Caught second interrupt signal! Emergency exit..');
+            process.exit(1)
+        }
     }
     
 }
