@@ -17,8 +17,9 @@ class MySQL {
      * @param {Object} [options]
      * @param {bool}   [options.withFieldsInfo=false] - every query will return not only the fetched rows, but also the fields additional details - used for backward compatibility
      * @param {bool}   [options.autoDetectWarnings=true] - Experimental feature: displays mysql warnings after each query
+     * @param {bool}   [options.protectFromDangerQueries=true] - detect danger queries like DROP DATABASE or DELIMITER usage and ask the user for approval before execution
      */
-    constructor({withFieldsInfo = false, autoDetectWarnings = true } = {}) {
+    constructor({withFieldsInfo = false, autoDetectWarnings = true, protectFromDangerQueries = true } = {}) {
         /** @type PromiseConnection **/
         this._db = null
         this._ssh = null
@@ -27,6 +28,7 @@ class MySQL {
         
         this._withFieldsInfo = withFieldsInfo
         this._autoDetectWarnings = autoDetectWarnings
+        this._protectFromDangerQueries = protectFromDangerQueries
         
         this._thresholds = {
             enabled: false,
@@ -101,10 +103,16 @@ class MySQL {
     
 
     async query(SQL, params = []){
+        if(typeof SQL !== 'string') throw Error('Invalid query, expected string but received ' + typeof SQL)
+        if(!SQL) throw Error('Invalid empty query')
+        
         vv(`${this._prefix}` + SQL.trim().replace(/\s+/g, ' ').substr(0,50) + `.. (${params.length} params)` )
         vvv('#Full Query:\n', SQL)
         vvv('#Params:', params)
-        await this._protect(SQL)
+        
+        if(this._protectFromDangerQueries) {
+            await this._protect(SQL)
+        }
         if(DRY_RUN) return []
         
         if(this._thresholds.enabled) await this._waitOnHighLoad()

@@ -35,7 +35,7 @@ class Utils {
             for (let arg of process.argv.slice(2)) {
                 if (types.includes(arg)) {
                     verboseLevel += levels[arg]
-                    if(verboseLevel > 3) {
+                    if(verboseLevel >= 3) {
                         verboseLevel = 3
                         break
                     }
