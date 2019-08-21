@@ -1,8 +1,7 @@
 'use strict'
 
 const colors = require('chalk')
-let verbose = (process.argv.findIndex(arg => arg === '-v' || arg === '--verbose') !== -1)
-
+const verbose = require('../lib/Utils').getVerboseLevel()
 
 let report = {pass: 0, fail: 0, warn: 0, text: { full: '', failed: '', summary: '' }}
 

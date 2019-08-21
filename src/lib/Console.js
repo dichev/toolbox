@@ -5,8 +5,7 @@ const colors = require('chalk')
 const stripAnsi = require('strip-ansi')
 const EventEmitter = require('events').EventEmitter
 const inspect = require('util').inspect
-
-let verbose = (process.argv.findIndex(arg => arg === '-v' || arg === '--verbose') !== -1)
+const verbose = require('./Utils').getVerboseLevel()
 
 const _console = {
     log: console.log,
@@ -28,10 +27,20 @@ let _emitter = null
 
 class Console {
     
+    static v(...args){
+        if (verbose >= 1) _console.log.apply(_console, colorize(args, 'gray'))
+    }
+    
+    static vv(...args){
+        if (verbose >= 2) _console.log.apply(_console, colorize(args, 'gray'))
+    }
+    
+    static vvv(...args){
+        if (verbose >= 3) _console.log.apply(_console, colorize(args, 'gray'))
+    }
+    
     static verbose(...args){
-        if (verbose) {
-            _console.log.apply(_console, colorize(args, 'gray'))
-        }
+        if (verbose >= 1) _console.log.apply(_console, colorize(args, 'gray'))
     }
     static log(...args){
         _console.log.apply(_console, args)

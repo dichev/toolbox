@@ -1,5 +1,7 @@
 'use strict'
 
+const _cache = { verbose: null }
+
 class Utils {
     
     /**
@@ -17,6 +19,31 @@ class Utils {
             index += size
         }
         return chunks
+    }
+    
+    /**
+     * Return the verbosity level passed by these cli arguments:  -v, -vv, -vvv, --verbose
+     * Note the argument can be combined, for example -v -v is equal to -vv
+     * @return {int} - between 0 and 3
+     */
+    static getVerboseLevel(){
+        if(_cache.verbose === null) {
+            let levels = {'--verbose': 1, '-v': 1, '-vv': 2, '-vvv': 3}
+            let types = Object.keys(levels)
+            let verboseLevel = 0
+    
+            for (let arg of process.argv.slice(2)) {
+                if (types.includes(arg)) {
+                    verboseLevel += levels[arg]
+                    if(verboseLevel > 3) {
+                        verboseLevel = 3
+                        break
+                    }
+                }
+            }
+            _cache.verbose = verboseLevel
+        }
+        return _cache.verbose
     }
 
     /*

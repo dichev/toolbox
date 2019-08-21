@@ -5,25 +5,9 @@ const SSHClient = require('./SSHClient')
 const mysql = require('mysql2/promise') // TODO: too much deps
 const MySQLDumper = require('./MySQLDumper')
 const console = require('../lib/Console')
+const {v, vv, vvv} = require('../lib/Console')
 const colors = require('chalk')
-const v = console.verbose
 const sleep = (sec) => new Promise((resolve) => setTimeout(resolve, sec * 1000))
-const sqlTrim = (sql) => {
-    sql = sql.trim().replace(/^(  )+/gm, '  ')
-    let lines = sql.split(/\r\n|\r|\n/)
-    let max = 30
-    if (lines.length > max) sql = lines.slice(0, max).join('\n') + `\n.. (${lines.length-max} lines more)`
-    return sql
-}
-const sqlParamsTrim = (params) => {
-    if(!params || !params.length) return '[]'
-    let out = params.toString()
-    let max = 100
-    if(out.length > max) {
-        out = out.substr(0,max-5) + ` ..(${out.length-max} chars more).. ` + out.substr(out.length-5)
-    }
-    return `[${out}]`
-}
 
 const DRY_RUN = (process.argv.findIndex(arg => arg === '--dry-run') !== -1)
 
@@ -84,7 +68,6 @@ class MySQL {
             multipleStatements: true
         }
         this._prefix = (DRY_RUN ? 'DRY RUN | `' : '') + (ssh ? ssh.prefix : '') + colors.blue(`${user}@${host}`.padEnd(24) + ` | `)
-        v(this._prefix + `Connecting to mysql..`);
         
         if (ssh) {
             if(!password) {
@@ -97,6 +80,7 @@ class MySQL {
             this._ssh = ssh
         }
     
+        v(this._prefix + `Connecting to mysql..`);
         this._db = await mysql.createConnection(cfg)
         this._dbName = database
         
@@ -117,7 +101,9 @@ class MySQL {
     
 
     async query(SQL, params = []){
-        v(`${this._prefix}\n` + sqlTrim(SQL) + '\n' + sqlParamsTrim(params))
+        vv(`${this._prefix}` + SQL.trim().replace(/\s+/g, ' ').substr(0,50) + `.. (${params.length} params)` )
+        vvv('#Full Query:\n', SQL)
+        vvv('#Params:', params)
         await this._protect(SQL)
         if(DRY_RUN) return []
         
@@ -125,7 +111,8 @@ class MySQL {
         
         let res = await this._db.query(SQL, params)
         let [rows, fields] = res
-        v('Result: ' + (rows.length || 0) + ' rows')
+    
+        vvv('#Result:', res)
         
         if(this._autoDetectWarnings) { // experimental feature
             await this.detectWarnings(res, SQL)
@@ -147,16 +134,20 @@ class MySQL {
         let [rows, fields] = res
         
         let hasWarnings = false
+        let foundHeader = false
         if (!Array.isArray(rows)) rows = [rows] // when is not multi-query and is UPDATE/DELETE/INSERT then the result is returned as object
+        
         for (let r of rows) {
             if (r.constructor.name === 'ResultSetHeader') {
                 if (r.warningStatus > 0) {
                     console.warn(this._prefix + `Detected ${r.warningStatus} warnings from last query: "` + SQL.trim().substr(0, 50) + '"..')
                     hasWarnings = true
                 }
-                v(this._prefix + r.info)
+                foundHeader = true
+                vv(this._prefix + (r.info || `Records: ${r.affectedRows}  Warnings: ${r.warningStatus}`))
             }
         }
+        if(!foundHeader) vv(`${this._prefix}` + 'Rows: ' + (rows.length || 0))
         if (hasWarnings) {
             let [warnings] = await this._db.query('SHOW WARNINGS')
             for (let w of warnings) console.warn(this._prefix + '- ' + w.Message)
