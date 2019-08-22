@@ -183,7 +183,8 @@ class MySQLDumper {
         }
         
         let SQL_GET_TABLE_NAMES = `SELECT TABLE_TYPE, TABLE_NAME FROM information_schema.TABLES
-                                   WHERE TABLE_SCHEMA = '${database}' ${filter}`
+                                   WHERE TABLE_SCHEMA = '${database}' ${filter}
+                                   ORDER BY TABLE_SCHEMA ASC, TABLE_NAME ASC`
         
         let [results] = await this.connection.query(SQL_GET_TABLE_NAMES)
         
