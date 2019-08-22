@@ -6,7 +6,7 @@ const promisify = require('util').promisify
 const writeFileAsync = promisify(require('fs').writeFile)
 const SSHClient = require('./SSHClient')
 const NEW_LINE = require('os').EOL
-
+const {v, vv, vvv} = require('../lib/Console')
 
 /**
  * @typedef {Object} Options
@@ -26,6 +26,7 @@ const NEW_LINE = require('os').EOL
  * @property {int} maxChunkSize = 1000
  * @property {boolean} exportData = false
  * @property {boolean} exportSchema = true
+ * @property {boolean} exportGeneratedColumnsData = false
  * @property {boolean} sortKeys = false
  * @property {boolean} silent = false
  */
@@ -100,9 +101,12 @@ class MySQLDumper {
      * @param {Options} options
      * @return {Promise<string>}
      */
-    async dump({exportSchema = true, exportData = false, sortKeys = false, maxChunkSize = 1000, dest = null, modifiers = [], excludeTables = [], includeTables = [], excludeColumns = {}, reorderColumns = {}, filterRows = {}}) {
+    async dump({exportSchema = true, exportData = false, exportGeneratedColumnsData = false, sortKeys = false, maxChunkSize = 1000, dest = null, modifiers = [], excludeTables = [], includeTables = [], excludeColumns = {}, reorderColumns = {}, filterRows = {}}) {
+        v('MySQL dump options:', arguments[0])
+        
         let [rows] = await this.connection.query('SELECT DATABASE() as dbname')
         let database = rows[0].dbname
+        if(!database) throw Error('MySQLDumper: you must select database before doing export, please execute first: USE dbname;')
         
         let output = ''
         /*
@@ -137,7 +141,7 @@ class MySQLDumper {
         let data = []
         if(exportData){
             for (let table of tables) { // TODO: use parallelLimit
-                let d = await this._dumpData(table, excludeColumns[table], reorderColumns[table], filterRows[table], maxChunkSize)
+                let d = await this._dumpData(table, excludeColumns[table], reorderColumns[table], filterRows[table], maxChunkSize, exportGeneratedColumnsData)
                 data.push(d)
             }
     
@@ -203,24 +207,18 @@ class MySQLDumper {
         return output
     }
     
-    async _dumpData(table, exclude = [], orderBy = '', filter = '', maxChunkSize = 1000){
-        let columns = '*'
-        let order = ''
+    async _dumpData(table, exclude = [], orderBy = '', filter = '', maxChunkSize = 1000, exportGeneratedColumnsData = false){
         
-        if(orderBy){
-            order = 'ORDER BY ' + orderBy
-        }
-        
-        if(exclude && exclude.length){
-            let SQL_COLUMNS = 'SHOW COLUMNS FROM `' + table + '` WHERE Field NOT IN ("' + exclude.join('","') + '")'
+        let excludedColumns = exclude && exclude.length ? `AND Field NOT IN ("${exclude.join('","')}")` : ''
+        let excludeGeneratedColumns = exportGeneratedColumnsData ? '' : `AND Extra != 'VIRTUAL GENERATED'`
+        let SQL_COLUMNS = `SHOW COLUMNS FROM \`${table}\` WHERE 1 ${excludeGeneratedColumns} ${excludedColumns}`
+        let [cols] = await this.connection.query(SQL_COLUMNS)
+        let columns = cols.map(r => r.Field)
+        columns = '`' + columns.join('`, `') + '`'
     
-            let [cols] = await this.connection.query(SQL_COLUMNS)
-            columns = cols.map(r => r.Field)
-            columns = '`' + columns.join('`, `') + '`'
-        }
-    
+        orderBy = orderBy ? 'ORDER BY ' + orderBy : ''
         filter = filter ? `AND (${filter})` : ''
-        let SQL = `SELECT ${columns} FROM ${table} WHERE 1 ${filter} ${order}`
+        let SQL = `SELECT ${columns} FROM ${table} WHERE 1 ${filter} ${orderBy}`
         
         let [results] = await this.connection.query(SQL)
         let output = this._buildInserts(results, table, maxChunkSize)
