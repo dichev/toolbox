@@ -313,7 +313,8 @@ class SSHClient {
         if(typeof cfg.username !== 'string') throw Error('[ssh] Invalid username (must be a string): ' + util.inspect(cfg.username))
         if(!cfg.privateKey && typeof cfg.agent === 'undefined') cfg.agent = isWin ? 'pageant' : process.env.SSH_AUTH_SOCK
         if(!cfg.privateKey && typeof cfg.agentForward === 'undefined') cfg.agentForward = true
-        
+        if(typeof cfg.keepaliveInterval === 'undefined') cfg.keepaliveInterval = 10000
+
         this._ssh = new SSH2();
         this._ssh
             .on('ready', () => {
