@@ -130,14 +130,6 @@ class Input {
                 resolve(input.join(' '))
             });
             
-            rl.on('SIGINT', () => {
-                rl.clearLine(0)
-                rl.clearLine(0)
-                rl.question('Ctrl+C recieved! Are you sure you want to exit? ', (answer) => {
-                    if (answer.match(/^y(es)?$/i)) reject('User cancel');
-                });
-            });
-            
             if (choices && def) {
                 rl.write(def)
             }
