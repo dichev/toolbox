@@ -145,10 +145,15 @@ class MySQLDumper {
                 data.push(d)
             }
     
-            if (tables.length !== data.length) throw Error('Data inconsistency found!')
+            for (let view of views) { // TODO: use parallelLimit
+                let d = await this._dumpData(view, excludeColumns[view], reorderColumns[view], filterRows[view], maxChunkSize, exportGeneratedColumnsData)
+                data.push(d)
+            }
+    
+            if ((tables.length + views.length) !== data.length) throw Error('Data inconsistency found!')
         }
     
-        for (let i = 0; i < tables.length; i++) {
+        for (let i = 0; i < data.length; i++) {
             if (exportSchema) output += structures[i] + '\n\n'
             if (exportData)   output += data[i] ? data[i] + '\n\n' : ''
         }
