@@ -153,7 +153,7 @@ class MySQLDumper {
             if ((tables.length + (exportViewData ? views.length : 0)) !== data.length) throw Error('Data inconsistency found!')
         }
     
-        for (let i = 0; i < data.length; i++) {
+        for (let i = 0; i < structures.length; i++) {
             if (exportSchema) output += structures[i] + '\n\n'
             if (exportData)   output += data[i] ? data[i] + '\n\n' : ''
         }
