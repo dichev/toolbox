@@ -97,7 +97,7 @@ class Logger {
                         time: Date.now(),
                         isRegion: true,
                         timeEnd: Date.now(),
-                        text: "Deploy: " + (debugInfo.rev !== undefined ? debugInfo.rev : "-"),
+                        text: "Deploy: " + (debugInfo.jira !== undefined ? debugInfo.jira : "-"),
                         data: debugInfo,
                         tags: ["deploy"],
                     }
