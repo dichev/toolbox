@@ -97,7 +97,7 @@ class Logger {
                         time: Date.now(),
                         isRegion: true,
                         timeEnd: Date.now(),
-                        text: "Deploy: " + (info.jiraTicketId ? `<a href="${info.jiraTicketId}" target="_parent">${debugInfo.jira}</a>` : "-"),
+                        text: "Deploy: " + (info.jiraTicketId ? `<a href="${info.jiraTicketId}" target="_blank">${debugInfo.jira}</a>` : "-"),
                         data: debugInfo,
                         tags: ["deploy"],
                     }
