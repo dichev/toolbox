@@ -101,7 +101,7 @@ class MySQLDumper {
      * @param {Options} options
      * @return {Promise<string>}
      */
-    async dump({exportSchema = true, exportData = false, exportGeneratedColumnsData = false, sortKeys = false, maxChunkSize = 1000, dest = null, modifiers = [], excludeTables = [], includeTables = [], excludeColumns = {}, reorderColumns = {}, filterRows = {}}) {
+    async dump({exportSchema = true, exportData = false, exportGeneratedColumnsData = false, exportViewData = false, sortKeys = false, maxChunkSize = 1000, dest = null, modifiers = [], excludeTables = [], includeTables = [], excludeColumns = {}, reorderColumns = {}, filterRows = {}}) {
         v('MySQL dump options:', arguments[0])
         
         let [rows] = await this.connection.query('SELECT DATABASE() as dbname')
@@ -145,10 +145,15 @@ class MySQLDumper {
                 data.push(d)
             }
     
-            if (tables.length !== data.length) throw Error('Data inconsistency found!')
+            if (exportViewData) for (let view of views) { // TODO: use parallelLimit
+                let d = await this._dumpData(view, excludeColumns[view], reorderColumns[view], filterRows[view], maxChunkSize, exportGeneratedColumnsData)
+                data.push(d)
+            }
+    
+            if ((tables.length + (exportViewData ? views.length : 0)) !== data.length) throw Error('Data inconsistency found!')
         }
     
-        for (let i = 0; i < tables.length; i++) {
+        for (let i = 0; i < structures.length; i++) {
             if (exportSchema) output += structures[i] + '\n\n'
             if (exportData)   output += data[i] ? data[i] + '\n\n' : ''
         }
