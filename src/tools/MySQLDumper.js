@@ -16,7 +16,7 @@ const {v, vv, vvv} = require('../lib/Console')
  * @property {string} connection.pass
  * @property {string} connection.database
  * @property {object} connection.ssh
- * @property {string} dest = null
+ * @property {string|WritableStream|null} dest = null
  * @property {array<function>} modifiers = []
  * @property {array<string>} excludeTables = []
  * @property {array<string>} includeTables = []
@@ -47,6 +47,7 @@ class MySQLDumper {
             let dumper = new MySQLDumper(sharedConnection, options.silent)
             if(!sharedConnection) await dumper.connect(options.connection)
             output = await dumper.dump(options)
+            if(!sharedConnection) await dumper.disconnect()
         } catch (err){
             if(callback) return callback(err)
             throw err
@@ -149,14 +150,14 @@ class MySQLDumper {
             }
         })
         
-        
+        let hasModifiers = options.modifiers && options.modifiers.length
         let dataTransform = new Transform({
             transform(chunk, encoding, callback) {
                 // unify new lines
                 chunk = chunk.toString().replace(/$\r?\n/gm, NEW_LINE)
     
                 // add custom replacements
-                if(options.modifiers.length) {
+                if(hasModifiers) {
                     options.modifiers.forEach(modifier => {
                         chunk = modifier(chunk)
                     })
@@ -208,9 +209,6 @@ class MySQLDumper {
                     }
                 }
         }
-        
-        await this.disconnect()
-        
     }
     
     async _getTableNames(database, excludeTables = [], includeTables = []){
@@ -272,7 +270,7 @@ class MySQLDumper {
             
             transform(chunk, encoding, callback) {
                 rows.push(chunk)
-                if(rows.length >= 10) {
+                if(rows.length >= maxChunkSize) {
                     this.push(toSQL(rows, table))
                     rows = []
                 }
