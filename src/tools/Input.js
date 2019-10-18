@@ -70,9 +70,6 @@ class Input {
                 rl.close()
                 if (this.history) process.stdin.removeListener('keypress', listener)
                
-                if(!answer && def) {
-                    answer = def || ''
-                }
                 if(choices && !choices.includes(answer)){
                     resolve(this.ask(question, choices, def))
                 } else {
@@ -82,7 +79,7 @@ class Input {
                 
             })
             
-            if(choices && def){
+            if(def){
                 rl.write(def)
             }
             
@@ -130,7 +127,7 @@ class Input {
                 resolve(input.join(' '))
             });
             
-            if (choices && def) {
+            if (def) {
                 rl.write(def)
             }
         })
