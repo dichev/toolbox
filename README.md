@@ -276,6 +276,7 @@ This is customized for our needs mysql dumper. It supports useful options for:
 - SSH connections
 - Output modifiers (like sorted keys)
 - Export data/schema beautification
+- Exporting as readable stream (useful for huge databases)
 
 ```javascript
 const dump = require('dopamine-toolbox').MySQLDumper.dump
@@ -300,6 +301,16 @@ await dump({
     },
     sortKeys: true,
     exportData: true // be careful with this option on mirrors
+    
+    // more options:
+    //   includeTables = []
+    //   excludeColumns = {}
+    //   reorderColumns = {}
+    //   filterRows = {}
+    //   maxChunkSize = 1000
+    //   exportGeneratedColumnsData = false
+    //   silent = false
+    //   returnOutput = false
 })
 ```
 
