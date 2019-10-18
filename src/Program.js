@@ -2,7 +2,7 @@
 /**
  * @typedef {Object|null} Params
  * @property {int} parallel
- * @property {boolean} verbose
+ * @property {int} verbose
  * @property {boolean} force
  * @property {boolean} dryRun
  * @property {boolean} quiet
@@ -20,6 +20,7 @@ const colors = require('chalk')
 const Pattern = require('./lib/Pattern')
 const Logger = require('./lib/Logger')
 const Chain = require('./lib/Chain')
+const Utils = require('./lib/Utils')
 const Chat = require('./plugins/GoogleChat')
 const commander = require('commander')
 const os = require('os')
@@ -169,6 +170,7 @@ class Program {
     
         commander.parse(process.argv)
         this.params = commander.opts()
+        this.params.verbose = Utils.getVerboseLevel()
         
         // START Read param from file
         for ( let paramName in this.params ){
