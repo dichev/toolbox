@@ -2,8 +2,8 @@
 
 
 const mysql = require('mysql2/promise')
-const promisify = require('util').promisify
-const writeFileAsync = promisify(require('fs').writeFile)
+const fs = require('fs')
+const {Readable, Transform, Stream} = require('stream')
 const SSHClient = require('./SSHClient')
 const NEW_LINE = require('os').EOL
 const {v, vv, vvv} = require('../lib/Console')
@@ -29,6 +29,7 @@ const {v, vv, vvv} = require('../lib/Console')
  * @property {boolean} exportGeneratedColumnsData = false
  * @property {boolean} sortKeys = false
  * @property {boolean} silent = false
+ * @property {boolean} returnOutput = false - that could be very memory heavy when the databases contains a lot of data
  */
 
 
@@ -97,93 +98,119 @@ class MySQLDumper {
         this.connection = this.sshClient = null
     }
     
+    
+    /**
+     * Using streams to be able to dump efficiently databases in any size without memory overflow
+     *
+     * @param {Options} options
+     * @return {Promise<String>}
+     */
+    async dump(options) {
+        let stream = this.dumpStream(options)
+        let dest = options.dest
+        
+        if (dest) {
+            if (typeof dest === 'string') {
+                let writable = fs.createWriteStream(dest, {encoding: 'utf8'})
+                stream.pipe(writable)
+            } else if (dest instanceof Stream) {
+                stream.pipe(dest)
+            } else {
+                throw Error(`Unsupported 'dest' value (${typeof dest}) - please use String or Stream`)
+            }
+        }
+        
+        let sql = ''
+        for await (const chunk of stream) {
+            if(options.returnOutput) sql += chunk
+        }
+    
+        if (dest) v('The database is dumped: ' + (dest.path || dest))
+        
+        return sql
+    }
+    
+    
     /**
      * @param {Options} options
-     * @return {Promise<string>}
+     * @return {ReadableStream}
      */
-    async dump({exportSchema = true, exportData = false, exportGeneratedColumnsData = false, exportViewData = false, sortKeys = false, maxChunkSize = 1000, dest = null, modifiers = [], excludeTables = [], includeTables = [], excludeColumns = {}, reorderColumns = {}, filterRows = {}}) {
+    dumpStream(options) {
+        let iterator = this.dumpGenerator(options)
+        let dataStream = new Readable({
+            async read() {
+                // await new Promise(resolve => setTimeout(()=> { console.warn('.. waited 1sec'); resolve() }, 1000)) // FOR DEBUGGING STREAMS
+                let res = await iterator.next()
+                if(!res.done){
+                    this.push(res.value)
+                } else {
+                    this.push(null)
+                }
+            }
+        })
+        
+        
+        let dataTransform = new Transform({
+            transform(chunk, encoding, callback) {
+                // unify new lines
+                chunk = chunk.toString().replace(/$\r?\n/gm, NEW_LINE)
+    
+                // add custom replacements
+                if(options.modifiers.length) {
+                    options.modifiers.forEach(modifier => {
+                        chunk = modifier(chunk)
+                    })
+                }
+                
+                this.push(chunk)
+                callback()
+            }
+        })
+    
+        let stream = dataStream.pipe(dataTransform)
+        return stream
+    }
+    
+    
+    /**
+     * Using generator to yield only group of the rows instead all of them at once - to avoid memory overload
+     * @param {Options} options
+     * @return {Promise<ReadableStream>}
+     */
+    async* dumpGenerator({exportSchema = true, exportData = false, exportGeneratedColumnsData = false, exportViewData = false, sortKeys = false, maxChunkSize = 1000, dest = null, modifiers = [], excludeTables = [], includeTables = [], excludeColumns = {}, reorderColumns = {}, filterRows = {}}) {
         v('MySQL dump options:', arguments[0])
         
         let [rows] = await this.connection.query('SELECT DATABASE() as dbname')
         let database = rows[0].dbname
         if(!database) throw Error('MySQLDumper: you must select database before doing export, please execute first: USE dbname;')
-        
-        let output = ''
+       
         /*
         output += 'DROP DATABASE IF EXISTS `'+ database+'`;\n'
         output += 'CREATE DATABASE `'+ database+'`;\n'
         output += 'USE `'+ database+'`;\n\n'
         */
+        
         let [tables,views] = await this._getTableNames(database, excludeTables, includeTables)
-        // this._log(`Found ${tables.length} tables in ${database}`)
-        // this._log(`Found ${views.length} views in ${database}`)
+        v(`Found ${tables.length} tables and ${views.length} views in ${database}`)
         
-        let structures = []
-        if(exportSchema) {
-            for (let table of tables) { // TODO: use parallelLimit
-                let structure = await this._dumpStructure(table, database)
-                structures.push(structure)
-            }
+        if(exportSchema || exportData) {
+            v('Exporting:')
+            for (let names of [tables, views])
+                for (let name of names) { // TODO: use parallelLimit (order will be not guaranteed)
+                    v(' -', name)
+                    if (exportSchema) {
+                        let structure = await this._dumpStructure(name, database, sortKeys)
+                        yield structure
+                    }
             
-            for (let view of views) { // TODO: use parallelLimit
-                let structure = await this._dumpStructure(view, database)
-                structures.push(structure)
-            }
-            
-            if (sortKeys) {
-                structures = structures.map(this._sortKeys)
-            }
-            
-            if ((tables.length + views.length) !== structures.length) throw Error('Data inconsistency found!')
-        }
-    
-        
-        let data = []
-        if(exportData){
-            for (let table of tables) { // TODO: use parallelLimit
-                let d = await this._dumpData(table, excludeColumns[table], reorderColumns[table], filterRows[table], maxChunkSize, exportGeneratedColumnsData)
-                data.push(d)
-            }
-    
-            if (exportViewData) for (let view of views) { // TODO: use parallelLimit
-                let d = await this._dumpData(view, excludeColumns[view], reorderColumns[view], filterRows[view], maxChunkSize, exportGeneratedColumnsData)
-                data.push(d)
-            }
-    
-            if ((tables.length + (exportViewData ? views.length : 0)) !== data.length) throw Error('Data inconsistency found!')
-        }
-    
-        let length;
-        if (exportSchema) length = structures.length
-        else {
-            length = tables.length
-            if (exportViewData) length += views.length
-        }
-    
-        for (let i = 0; i < length; i++) {
-            if (exportSchema) output += structures[i] + '\n\n'
-            if (exportData)   output += data[i] ? data[i] + '\n\n' : ''
-        }
-        
-        return await this._save(output, dest, modifiers)
-    }
-    
-    async _save(output, dest, modifiers){
-        
-        modifiers.forEach(modifier => { // add custom replacements
-            output = modifier(output)
-        })
-        
-        output = output.replace(/\r?\n/g, NEW_LINE)
-        
-        if(typeof dest === 'string'){
-            await writeFileAsync(dest, output, 'utf8')
-            this._log('The database is dumped: ' + dest)
+                    if (exportData) {
+                        yield* this._dumpData(name, excludeColumns[name], reorderColumns[name], filterRows[name], maxChunkSize, exportGeneratedColumnsData)
+                    }
+                }
         }
         
         await this.disconnect()
         
-        return output
     }
     
     async _getTableNames(database, excludeTables = [], includeTables = []){
@@ -209,17 +236,22 @@ class MySQLDumper {
         return [tables, views]
     }
     
-    async _dumpStructure(table, database){
+    async _dumpStructure(table, database, sortKeys = false){
         let SQL = 'SHOW CREATE TABLE `' + table + '`'
         let [results] = await this.connection.query(SQL)
         let rules = results[0]['Create Table'] || this._beautifyCreateView(results[0]['Create View'], database)
         if(!rules) console.error('Missing create table info for', table)
         let output = rules + ';'
-        return output
+        if(sortKeys) {
+            output = this._sortKeys(output)
+        }
+        return output + NEW_LINE + NEW_LINE
     }
     
-    async _dumpData(table, exclude = [], orderBy = '', filter = '', maxChunkSize = 1000, exportGeneratedColumnsData = false){
-        
+    /**
+     * @return {string}
+     */
+    async* _dumpData(table, exclude = [], orderBy = '', filter = '', maxChunkSize = 1000, exportGeneratedColumnsData = false){
         let excludedColumns = exclude && exclude.length ? `AND Field NOT IN ("${exclude.join('","')}")` : ''
         let excludeGeneratedColumns = exportGeneratedColumnsData ? '' : `AND Extra != 'VIRTUAL GENERATED'`
         let SQL_COLUMNS = `SHOW COLUMNS FROM \`${table}\` WHERE 1 ${excludeGeneratedColumns} ${excludedColumns}`
@@ -230,52 +262,83 @@ class MySQLDumper {
         orderBy = orderBy ? 'ORDER BY ' + orderBy : ''
         filter = filter ? `AND (${filter})` : ''
         let SQL = `SELECT ${columns} FROM ${table} WHERE 1 ${filter} ${orderBy}`
+    
+    
+        let rows = []
+        let toSQL = this._buildInsert.bind(this)
+        let dataTransform = new Transform({
+            writableObjectMode: true,
+            highWaterMark: 1,
+            
+            transform(chunk, encoding, callback) {
+                rows.push(chunk)
+                if(rows.length >= 10) {
+                    this.push(toSQL(rows, table))
+                    rows = []
+                }
+                callback()
+            },
+            flush(callback) {
+                if(rows.length) {
+                    this.push(toSQL(rows, table))
+                    rows = []
+                }
+                this.push('\n')
+                callback()
+            }
+        })
         
-        let [results] = await this.connection.query(SQL)
-        let output = this._buildInserts(results, table, maxChunkSize)
-        return output
+        let stream = this.connection.connection.query(SQL).stream().pipe(dataTransform)
+        for await (const chunk of stream) {
+            yield chunk
+        }
     }
     
-    _buildInserts(rows, table, maxChunkSize = 1000) {
-        if (!rows || !rows.length) return
+    /**
+     * @param {Object} rows
+     * @param {string} table
+     * @return {string}
+     */
+    _buildInsert(rows, table) {
+        if (!rows || !rows.length) return ''
         
-        let sql = ''
-        let chunks = Math.ceil(rows.length / maxChunkSize)
-        
-        for (let i = 0; i < chunks; i++) {
-            let inserts = [];
-            for (let j = 0; j < maxChunkSize; j++) {
-                let row = rows[i*maxChunkSize +j];
-                if(!row) break
+        let values = rows.map(row => this._toValues(row))
+        let columns = Object.keys(rows[0])
+        let sql = 'INSERT INTO `' + table + '` (`' + columns.join('`, `') + '`) VALUES\n' + values.join(',\n') + ';\n'
     
-                let values = [];
-                for (let k in row) {
-                    let v = row[k]
-                    if (v === null) {
-                        values.push('NULL')
-                    }
-                    else if (typeof v === 'number') {
-                        values.push(v)
-                    }
-                    else {
-                        let val = ''
-                        if (typeof v === 'object') { // json
-                            val = JSON.stringify(v)
-                        } else {
-                            val = v
-                        }
-                        val = this.connection.escape(val)
-                        val = val.replace(/\\"/g, '"') // restore escaping of double quotes (because json)
-                        values.push(val)
-                    }
-                }
-                inserts.push('(' + values.join(', ') + ')');
+        return sql + NEW_LINE
+    }
+    
+    /**
+     *
+     * @param {Object} row
+     * @return {string}
+     */
+    _toValues(row) {
+        let sql
+        let values = [];
+        for (let k in row) {
+            let v = row[k]
+            if (v === null) {
+                values.push('NULL')
             }
-            // sql += 'TRUNCATE ' + table + ';\n';
-            sql += 'INSERT INTO `' + table + '` (`' + Object.keys(rows[0]).join('`, `') + '`) VALUES\n' + inserts.join(',\n') + ';\n'
-
+            else if (typeof v === 'number') {
+                values.push(v)
+            }
+            else {
+                let val = ''
+                if (typeof v === 'object') { // json
+                    val = JSON.stringify(v)
+                } else {
+                    val = v
+                }
+                val = this.connection.escape(val)
+                val = val.replace(/\\"/g, '"') // restore escaping of double quotes (because json)
+                values.push(val)
+            }
         }
         
+        sql = '(' + values.join(', ') + ')'
         return sql
     }
     
@@ -307,11 +370,7 @@ class MySQLDumper {
                   .replace(/ SQL SECURITY DEFINER/, '')
                   .replace(new RegExp('`'+database+'`.', 'gi'), '')
     }
-   
-    // Print some info if not in silent mode
-    _log(log){
-        if(!this.silent) console.log(log);
-    }
+
     
 }
 
