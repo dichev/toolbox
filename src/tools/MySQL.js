@@ -14,10 +14,10 @@ const DRY_RUN = (process.argv.findIndex(arg => arg === '--dry-run') !== -1)
 class MySQL {
     
     /**
-     * @param {Object} [options]
-     * @param {bool}   [options.withFieldsInfo=false] - every query will return not only the fetched rows, but also the fields additional details - used for backward compatibility
-     * @param {bool}   [options.autoDetectWarnings=true] - Experimental feature: displays mysql warnings after each query
-     * @param {bool}   [options.protectFromDangerQueries=true] - detect danger queries like DROP DATABASE or DELIMITER usage and ask the user for approval before execution
+     * @param {Object}  [options]
+     * @param {boolean} [options.withFieldsInfo=false] - every query will return not only the fetched rows, but also the fields additional details - used for backward compatibility
+     * @param {boolean} [options.autoDetectWarnings=true] - Experimental feature: displays mysql warnings after each query
+     * @param {boolean} [options.protectFromDangerQueries=true] - detect danger queries like DROP DATABASE or DELIMITER usage and ask the user for approval before execution
      */
     constructor({withFieldsInfo = false, autoDetectWarnings = true, protectFromDangerQueries = true } = {}) {
         /** @type PromiseConnection **/

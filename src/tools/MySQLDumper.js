@@ -1,10 +1,7 @@
 'use strict'
 
-
-const mysql = require('mysql2/promise')
 const fs = require('fs')
 const {Readable, Transform, Stream} = require('stream')
-const SSHClient = require('./SSHClient')
 const NEW_LINE = require('os').EOL
 const {v, vv, vvv} = require('../lib/Console')
 
@@ -60,7 +57,6 @@ class MySQLDumper {
     
     /**
      * @param {MySQL}  connection
-     * @param {boolean} silent
      */
     constructor(connection = null){
         if(!connection) throw Error('MySQLDumper: missing required connection, please pass MySQL instance')
