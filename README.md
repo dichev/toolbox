@@ -279,15 +279,13 @@ This is customized for our needs mysql dumper. It supports useful options for:
 - Exporting as readable stream (useful for huge databases)
 
 ```javascript
-const dump = require('dopamine-toolbox').MySQLDumper.dump
-await dump({
-    connection: {
-        host: 'localhost',
-        user: 'root',
-        password: '',
-        database: 'mysql',
-        ssh: null
-    },
+const MySQLDumper = require('dopamine-toolbox').MySQLDumper
+const MySQL = require('dopamine-toolbox').MySQL
+
+let db = new MySQL().connect({ host: 'localhost', user: 'root', password: '', database: 'mysql' })
+let dumper = new MySQLDumper(db)
+
+await dumper.dump({ // or use the shorthand: await db.dump({
 
     dest: './dump.sql',
 
@@ -309,7 +307,6 @@ await dump({
     //   filterRows = {}
     //   maxChunkSize = 1000
     //   exportGeneratedColumnsData = false
-    //   silent = false
     //   returnOutput = false
 })
 ```
