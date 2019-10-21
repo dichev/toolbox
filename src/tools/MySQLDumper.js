@@ -8,14 +8,20 @@ const SSHClient = require('./SSHClient')
 const NEW_LINE = require('os').EOL
 const {v, vv, vvv} = require('../lib/Console')
 
+const USAGE = `
+    let db = await new MySQL().connect({user, host, password}, ssh)
+    await db.dump({ .. })
+    await db.disconnect()
+    
+    // or
+    
+    let dumper = new MySQLDumper(db)
+    await dumper.dump({ .. })
+    await db.disconnect()
+`
+
 /**
- * @typedef {Object} Options
- * @property {object|PromiseConnection} connection
- * @property {string} connection.host
- * @property {string} connection.user
- * @property {string} connection.pass
- * @property {string} connection.database
- * @property {object} connection.ssh
+ * @typedef  {Object} Options
  * @property {string|WritableStream|null} dest = null
  * @property {array<function>} modifiers = []
  * @property {array<string>} excludeTables = []
@@ -28,7 +34,6 @@ const {v, vv, vvv} = require('../lib/Console')
  * @property {boolean} exportSchema = true
  * @property {boolean} exportGeneratedColumnsData = false
  * @property {boolean} sortKeys = false
- * @property {boolean} silent = false
  * @property {boolean} returnOutput = false - that could be very memory heavy when the databases contains a lot of data
  */
 
@@ -36,67 +41,31 @@ const {v, vv, vvv} = require('../lib/Console')
 class MySQLDumper {
     
     /**
-     * @param {Options}   options
-     * @param {function} [callback]
+     * @deprecated
+     * @param {Options} options
      * @return {string}
      */
-    static async dump(options, callback) {
-        let output = ''
-        try {
-            let sharedConnection = options.connection && options.connection.constructor && options.connection.constructor.name === 'PromiseConnection' && options.connection || null
-            let dumper = new MySQLDumper(sharedConnection, options.silent)
-            if(!sharedConnection) await dumper.connect(options.connection)
-            output = await dumper.dump(options)
-            if(!sharedConnection) await dumper.disconnect()
-        } catch (err){
-            if(callback) return callback(err)
-            throw err
-        }
+    static async dump(options) {
+        console.warn(`MySQLDumper: The static method MySQLDumper.dump() is deprecated. Please switch to the new model: ${USAGE}`)
+        if(!options.connection) throw Error('Missing connection configuration')
+
+        const MySQL = require('./MySQL')
+        let db = await new MySQL().connect(options.connection)
+        let dumper = new MySQLDumper(db)
+        let output = await dumper.dump(options)
+        await db.disconnect()
         return output
     }
     
-    constructor(connection = null, silent = false){
-        /** @type mysql **/
-        this.connection = null
-        /** @type SSHClient **/
-        this.sshClient = null
-        /** @type boolean **/
-        this.silent = silent
-        /** @type boolean **/
-        this.sharedConnection = false
-        
-        
-        if(connection) {
-            this.connection = connection
-            this.sharedConnection = true
-        }
-    }
     
-    async connect({host, user, password, database, ssh}){
-        let cfg = {
-            host: host,
-            user: user,
-            password: password,
-            database: database,
-            supportBigNumbers: true,
-            bigNumberStrings: true,
-            dateStrings: 'date' // TODO - customize
-        }
-        
-        if (ssh) {
-            this.sshClient = new SSHClient();
-            await this.sshClient.connect(ssh)
-            let port = `1${Date.now().toString().substr(-4)}` // random port
-            cfg.stream = await this.sshClient.tunnel(port, 3306)
-        }
-        this.connection = await mysql.createConnection(cfg)
-    }
-    
-    async disconnect() {
-        if (this.sharedConnection) return // we are not owner of the shared connection
-        if (this.connection) this.connection.end()
-        if (this.sshClient) await this.sshClient.disconnect()
-        this.connection = this.sshClient = null
+    /**
+     * @param {MySQL}  connection
+     * @param {boolean} silent
+     */
+    constructor(connection = null){
+        if(!connection) throw Error('MySQLDumper: missing required connection, please pass MySQL instance')
+        /** @type MySQL **/
+        this.connection = connection
     }
     
     
@@ -181,7 +150,7 @@ class MySQLDumper {
     async* dumpGenerator({exportSchema = true, exportData = false, exportGeneratedColumnsData = false, exportViewData = false, sortKeys = false, maxChunkSize = 1000, dest = null, modifiers = [], excludeTables = [], includeTables = [], excludeColumns = {}, reorderColumns = {}, filterRows = {}}) {
         v('MySQL dump options:', arguments[0])
         
-        let [rows] = await this.connection.query('SELECT DATABASE() as dbname')
+        let [rows] = await this.connection.query('SELECT DATABASE() as dbname', [], {withFieldsInfo: true})
         let database = rows[0].dbname
         if(!database) throw Error('MySQLDumper: you must select database before doing export, please execute first: USE dbname;')
        
@@ -226,7 +195,7 @@ class MySQLDumper {
                                    WHERE TABLE_SCHEMA = '${database}' ${filter}
                                    ORDER BY TABLE_SCHEMA ASC, TABLE_NAME ASC`
         
-        let [results] = await this.connection.query(SQL_GET_TABLE_NAMES)
+        let [results] = await this.connection.query(SQL_GET_TABLE_NAMES, [], {withFieldsInfo: true})
         
         let tables = []
         let views = []
@@ -236,7 +205,7 @@ class MySQLDumper {
     
     async _dumpStructure(table, database, sortKeys = false){
         let SQL = 'SHOW CREATE TABLE `' + table + '`'
-        let [results] = await this.connection.query(SQL)
+        let [results] = await this.connection.query(SQL, [], {withFieldsInfo: true})
         let rules = results[0]['Create Table'] || this._beautifyCreateView(results[0]['Create View'], database)
         if(!rules) console.error('Missing create table info for', table)
         let output = rules + ';'
@@ -253,7 +222,7 @@ class MySQLDumper {
         let excludedColumns = exclude && exclude.length ? `AND Field NOT IN ("${exclude.join('","')}")` : ''
         let excludeGeneratedColumns = exportGeneratedColumnsData ? '' : `AND Extra != 'VIRTUAL GENERATED'`
         let SQL_COLUMNS = `SHOW COLUMNS FROM \`${table}\` WHERE 1 ${excludeGeneratedColumns} ${excludedColumns}`
-        let [cols] = await this.connection.query(SQL_COLUMNS)
+        let [cols] = await this.connection.query(SQL_COLUMNS, [], {withFieldsInfo: true})
         let columns = cols.map(r => r.Field)
         columns = '`' + columns.join('`, `') + '`'
     
@@ -286,7 +255,8 @@ class MySQLDumper {
             }
         })
         
-        let stream = this.connection.connection.query(SQL).stream().pipe(dataTransform)
+        let stream = await this.connection.query(SQL, [], { stream: true, withFieldsInfo: true })
+        stream = stream.pipe(dataTransform)
         for await (const chunk of stream) {
             yield chunk
         }

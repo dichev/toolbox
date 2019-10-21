@@ -62,6 +62,8 @@ class MySQL {
      * @return {Promise<MySQL>}
      */
     async connect({host = '127.0.0.1', user = 'root', password = '', database = ''}, ssh = null){
+        if(arguments[0] instanceof MySQL) throw Error('MySQL: wrong connection configuration, please do not pass MySQL instance to the connect() method!')
+        
         let cfg = {
             host: host,
             user: user,
@@ -110,9 +112,10 @@ class MySQL {
      * @param {Array}   params
      * @param {object}  options
      * @param {boolean} options.stream
+     * @param {boolean} options.withFieldsInfo
      * @return {Promise<Array|ReadableStream>}
      */
-    async query(SQL, params = [], { stream = false } = {}){
+    async query(SQL, params = [], { stream = false, withFieldsInfo = false } = {}){
         if(typeof SQL !== 'string') throw Error('Invalid query, expected string but received ' + typeof SQL)
         if(!SQL) throw Error('Invalid empty query')
         
@@ -142,12 +145,13 @@ class MySQL {
             vvv('#Result:', res)
     
             if (this._autoDetectWarnings) { // experimental feature
-            await this.detectWarnings(res, SQL)
-        }
+                await this.detectWarnings(res, SQL)
+            }
     
-        if(this._withFieldsInfo) { // used for backward compatibility on old applications
-            return res
-        }
+            withFieldsInfo = withFieldsInfo || this._withFieldsInfo
+            if (withFieldsInfo) { // used for backward compatibility on old applications
+                return res
+            }
     
             return rows
         }
@@ -183,12 +187,12 @@ class MySQL {
     }
     
     async dump({exportSchema = true, exportData = false, exportGeneratedColumnsData = false, sortKeys = false, maxChunkSize = 1000, dest = null, modifiers = [], excludeTables = [], includeTables = [], excludeColumns = {}, reorderColumns = {}, returnOutput = false}){
-        let dumper = new MySQLDumper(this.getConnection())
+        let dumper = new MySQLDumper(this)
         return await dumper.dump({exportSchema, exportData, exportGeneratedColumnsData, sortKeys, maxChunkSize, dest, modifiers, excludeTables, includeTables, excludeColumns, reorderColumns, returnOutput})
     }
     
     dumpStream({exportSchema = true, exportData = false, exportGeneratedColumnsData = false, sortKeys = false, maxChunkSize = 1000, dest = null, modifiers = [], excludeTables = [], includeTables = [], excludeColumns = {}, reorderColumns = {}}){
-        let dumper = new MySQLDumper(this.getConnection())
+        let dumper = new MySQLDumper(this)
         return dumper.dumpStream({exportSchema, exportData, exportGeneratedColumnsData, sortKeys, maxChunkSize, dest, modifiers, excludeTables, includeTables, excludeColumns, reorderColumns})
     }
     
@@ -208,6 +212,10 @@ class MySQL {
     async rollback(){
         this.inTransaction = false
         return await this._db.rollback()
+    }
+    
+    escape(val){
+        return this._db.connection.escape(val)
     }
     
     /**

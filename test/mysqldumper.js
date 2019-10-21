@@ -1,5 +1,6 @@
 'use strict'
 
+const MySQL = require('../index').MySQL
 const MySQLDumper = require('../index').MySQLDumper
 const verboseLevel = require('../index').lib.Utils.getVerboseLevel()
 const fs = require('fs')
@@ -10,7 +11,7 @@ if(verboseLevel === 0) throw Error('Please run the test with verbose parameter: 
 if(!fs.existsSync(DIR)) fs.mkdirSync(__dirname + '/tmp')
 
 ;(async () => {
-
+    
     // Test static
     await MySQLDumper.dump({
         connection: {
@@ -26,6 +27,30 @@ if(!fs.existsSync(DIR)) fs.mkdirSync(__dirname + '/tmp')
         excludeColumns: {
             'help_topic': ['example', 'description']
         },
+        
+        maxChunkSize: 100,
+        exportData: true,
+        sortKeys: true,
+    })
+    
+    
+    // Test as MySQL
+    let db = await new MySQL().connect({
+        host: 'localhost',
+        user: 'root',
+        password: '',
+        database: 'mysql',
+    })
+    
+    
+    // Test from MySQL
+    await db.dump({
+        dest: DIR + '/dump-full.sql',
+        
+        excludeTables: ['innodb_index_stats', 'innodb_table_stats'],
+        excludeColumns: {
+            'help_topic': ['example', 'description']
+        },
     
         maxChunkSize: 100,
         exportData: true,
@@ -34,14 +59,8 @@ if(!fs.existsSync(DIR)) fs.mkdirSync(__dirname + '/tmp')
     
     
     // Test as object
-    let dumper = new MySQLDumper()
-    await dumper.connect({
-        host: 'localhost',
-        user: 'root',
-        password: '',
-        database: 'mysql',
-    })
-    
+    let dumper = new MySQLDumper(db)
+
     // Test as promise
     await dumper.dump({
         dest: DIR + '/dump-schema.sql',
@@ -64,6 +83,6 @@ if(!fs.existsSync(DIR)) fs.mkdirSync(__dirname + '/tmp')
         console.log(chunk.toString())
     }
 
-    await dumper.disconnect()
+    await db.disconnect()
 
 })()
