@@ -55,17 +55,19 @@ class MySQL {
     
     /**
      * @param {string} host
+     * @param {number} sqlPort
      * @param {string} user
      * @param {string} password
      * @param {string} database
      * @param {SSHClient} ssh
      * @return {Promise<MySQL>}
      */
-    async connect({host = '127.0.0.1', user = 'root', password = '', database = ''}, ssh = null){
+    async connect({host = '127.0.0.1', sqlPort = 3306, user = 'root', password = '', database = ''}, ssh = null){
         if(arguments[0] instanceof MySQL) throw Error('MySQL: wrong connection configuration, please do not pass MySQL instance to the connect() method!')
         
         let cfg = {
             host: host,
+            port: sqlPort,
             user: user,
             password: password,
             database: database,
@@ -83,7 +85,7 @@ class MySQL {
             }
             
             let port = `1${Date.now().toString().substr(-4)}` // random port
-            cfg.stream = await ssh.tunnel(port, 3306)
+            cfg.stream = await ssh.tunnel(port, sqlPort)
             this._ssh = ssh
         }
     
