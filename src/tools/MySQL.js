@@ -38,6 +38,7 @@ class MySQL {
         }
         
         this.inTransaction = false
+        this._warned = false
     }
     
     /**
@@ -103,14 +104,26 @@ class MySQL {
         return this
     }
     
-
-    async query(SQL, params = []){
+    
+    /**
+     * @param {string}  SQL
+     * @param {Array}   params
+     * @param {object}  options
+     * @param {boolean} options.stream
+     * @return {Promise<Array|ReadableStream>}
+     */
+    async query(SQL, params = [], { stream = false } = {}){
         if(typeof SQL !== 'string') throw Error('Invalid query, expected string but received ' + typeof SQL)
         if(!SQL) throw Error('Invalid empty query')
         
         vv(`${this._prefix}` + SQL.trim().replace(/\s+/g, ' ').substr(0,50) + `.. (${params.length} params)` )
         vvv('#Full Query:\n', SQL)
         vvv('#Params:', params)
+        vvv('#Stream:', stream)
+        if(stream && this._autoDetectWarnings && !this._warned) {
+            v('MySQL: Auto-detect warnings can not work in stream mode. You should check them manually')
+            this._warned = true
+        }
         
         if(this._protectFromDangerQueries) {
             await this._protect(SQL)
@@ -119,20 +132,25 @@ class MySQL {
         
         if(this._thresholds.enabled) await this._waitOnHighLoad()
         
-        let res = await this._db.query(SQL, params)
-        let [rows, fields] = res
+        if(stream) {
+            return this._db.connection.query(SQL, params).stream()
+        }
+        else {
+            let res = await this._db.query(SQL, params)
+            let [rows, fields] = res
     
-        vvv('#Result:', res)
-        
-        if(this._autoDetectWarnings) { // experimental feature
+            vvv('#Result:', res)
+    
+            if (this._autoDetectWarnings) { // experimental feature
             await this.detectWarnings(res, SQL)
         }
     
         if(this._withFieldsInfo) { // used for backward compatibility on old applications
             return res
         }
-        
-        return rows
+    
+            return rows
+        }
     }
     
     /**
