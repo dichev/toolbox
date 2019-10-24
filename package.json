@@ -1,7 +1,7 @@
 {
   "name": "dopamine-toolbox",
   "description": "Dopamine Tool Box - bunch of tools used for automation",
-  "version": "2.0.3",
+  "version": "2.1.0",
   "private": true,
   "main": "./index.js",
   "scripts": {
