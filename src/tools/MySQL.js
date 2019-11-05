@@ -114,10 +114,10 @@ class MySQL {
      * @param {Array}   params
      * @param {object}  options
      * @param {boolean} options.stream
-     * @param {boolean} options.withFieldsInfo
+     * @param {boolean|null} options.withFieldsInfo
      * @return {Promise<Array|ReadableStream>}
      */
-    async query(SQL, params = [], { stream = false, withFieldsInfo = false } = {}){
+    async query(SQL, params = [], { stream = false, withFieldsInfo = null } = {}){
         if(typeof SQL !== 'string') throw Error('Invalid query, expected string but received ' + typeof SQL)
         if(!SQL) throw Error('Invalid empty query')
         
@@ -150,13 +150,35 @@ class MySQL {
                 await this.detectWarnings(res, SQL)
             }
     
-            withFieldsInfo = withFieldsInfo || this._withFieldsInfo
+            withFieldsInfo = withFieldsInfo !== null ? withFieldsInfo : this._withFieldsInfo
             if (withFieldsInfo) { // used for backward compatibility on old applications
                 return res
             }
     
             return rows
         }
+    }
+    
+    /**
+     * Returns values of the executed statement as one dimension array.
+     * Expects to fetch single column
+     * 
+     * @param {string} SQL
+     * @param {array} params
+     * @return {Promise<Array>}
+     *
+     * @example await db.fetchColumn('SELECT name FROM table') => returns ['John', 'Alica']
+     */
+    async fetchColumn(SQL, params = []){
+        let rows = await this.query(SQL, params, { withFieldsInfo: false })
+        if(!rows.length) return []
+        
+        let countColumns = Object.keys(rows[0]).length
+        if(countColumns !== 1) { // better protect from wrong code flow
+            throw Error(`MySQL fetchColumn method expects single column, however ${countColumns} columns are fetched: ${Object.keys(rows[0])}`)
+        }
+        
+        return rows.map(row => Object.values(row)[0])
     }
     
     /**
