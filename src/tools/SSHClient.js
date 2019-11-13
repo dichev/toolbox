@@ -479,7 +479,7 @@ class SSHClient {
                 ]
                 let mustStartWith = [
                     '/home/dopamine/',
-                    '/opt/dopamine/',
+                    '/opt/',
                 ]
     
                 if (mustNotBeExactly.includes(dir) || !mustStartWith.find(base => dir.startsWith(base))) {
