@@ -19,12 +19,13 @@ const fetch = require('node-fetch')
 // }
 class Logger {
     /**
-     * @param config
+     * @param {object} config
      */
     constructor(config){
-        this.enabled = !!config
         this._config = config
-        this.hasMySQLLog = this.enabled
+        this.hasMySQLLog = !!config.mysql
+        this.hasGrafanaLog = !!config.grafana && config.grafana.apiUrl && config.grafana.apiKey
+        this.enabled = this.hasMySQLLog || this.hasGrafanaLog
         this._db = null
         this._ssh = null
         this._dbRecordId = null
@@ -62,10 +63,8 @@ class Logger {
      * @private
      */
     async _log(info, source){
-        if (!this._db) console.log( 'Logger: No db initialised!' )
-
         // Write to mySQL log
-        if(this.hasMySQLLog && this._db) {
+        if(this.hasMySQLLog) {
             try {
                 let sql = !this._dbRecordId ? 'INSERT INTO `deploy_log` SET ?' : 'UPDATE `deploy_log` SET ? WHERE id = ' + this._dbRecordId
                 let result = await this._db.query(sql, info)
@@ -74,14 +73,16 @@ class Logger {
                 console.log(e)
             }
         }
-
-        await this._logGrafanaAnnotation(source, info);
+    
+        if (this.hasGrafanaLog) {
+            await this._logGrafanaAnnotation(source, info);
+        }
 
         return this._dbRecordId
     }
 
     async _logGrafanaAnnotation(source, info) {
-        if (source === 'start' && this._config.grafana.apiUrl && this._config.grafana.apiKey) {
+        if (source === 'start') {
             try {
                 let debugInfo = JSON.parse(info.debugInfo)
 
@@ -115,7 +116,9 @@ class Logger {
                 await fetch(this._config.grafana.apiUrl, options)
                 process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 1;
 
-            } catch (e) {}
+            } catch (e) {
+                console.error(e)
+            }
         }
     }
 
@@ -124,16 +127,15 @@ class Logger {
      */
     async _prepare() {
         if(this.hasMySQLLog) {
-
-            if(this._config.mysql.ssh) {
-                this._ssh = await new SSHClient().connect({host: this._config.mysql.host, username: 'root'})
-            }
-
-            let client = new MySQLClient()
             try {
+                if(this._config.mysql.ssh) {
+                    this._ssh = await new SSHClient().connect({host: this._config.mysql.host, username: 'root'})
+                }
+                let client = new MySQLClient()
                 this._db = await client.connect(this._config.mysql, this._ssh)
             } catch (e) {
                 console.error(e)
+                this.hasMySQLLog = false
             }
         }
         return this._db
