@@ -161,10 +161,11 @@ class GoogleChat {
     _sanitizeMessage(text){
 		if(!text) return text
 
+        text = text.trim()
         if (text.length > MESSAGE_LENGTH_LIMIT) {
             text = text.substr(0, MESSAGE_LENGTH_LIMIT - 2) + '..'
         }
-        return text.trim()
+        return text
     }
 }
 

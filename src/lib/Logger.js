@@ -23,8 +23,8 @@ class Logger {
      */
     constructor(config){
         this._config = config
-        this.hasMySQLLog = !!config.mysql
-        this.hasGrafanaLog = !!config.grafana && config.grafana.apiUrl && config.grafana.apiKey
+        this.hasMySQLLog = config && !!config.mysql
+        this.hasGrafanaLog = config && !!config.grafana && config.grafana.apiUrl && config.grafana.apiKey
         this.enabled = this.hasMySQLLog || this.hasGrafanaLog
         this._db = null
         this._ssh = null
