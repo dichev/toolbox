@@ -50,6 +50,7 @@ it('detects not safe rm -r commands', async () => {
         'rm -r /root',
         'rm -rf /home/dopamine/something && echo 1 && rm -rf /',
         'rm -rf something',
+        'rm -rf one two three',
         'cd /home/dopamine/.. && rm -rf something',
         // 'rm -f -r something', // TODO support it
     ]

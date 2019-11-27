@@ -463,8 +463,9 @@ class SSHClient {
                 if(dir.startsWith('/')) baseDir = dir
                 else baseDir = path.join(baseDir, cd[1])
             }
-            if(rm && rm[1]){
-                let dir = rm[1]
+            
+            if(rm && rm[4]){
+                let dir = rm[4]
                 if (!dir.startsWith('/')) {
                     dir = path.join(baseDir, rm[1])
                 }
@@ -478,12 +479,14 @@ class SSHClient {
                     '/home/dopamine/production/*',
                     '/opt/dopamine/',
                     '/opt/dopamine/*',
+                    '/opt/',
+                    '/opt/*',
                 ]
                 let mustStartWith = [
                     '/home/dopamine/',
                     '/opt/',
                 ]
-    
+                
                 if (mustNotBeExactly.includes(dir) || !mustStartWith.find(base => dir.startsWith(base))) {
                     safe = false
                 }
