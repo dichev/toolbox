@@ -446,7 +446,7 @@ class SSHClient {
     
         let filterRe = /^(rm|cd)\s+/
         let cdRe = /^cd\s+(\S+)/
-        let rmRe = /^rm\s+-.*?r.*?\s+(\S+)/
+        let rmRe = /^(rm)(\s+)(-\S?r.*?\s+)(\S+)/
         
         let safe = true
         let baseDir = '/'
