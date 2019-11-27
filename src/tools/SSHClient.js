@@ -444,9 +444,10 @@ class SSHClient {
      */
     isSafe(commands){
     
-        let filterRe = /^(rm|cd)\s+/
+        let filterRe = /^(rm|cd|gcloud)\s+/
         let cdRe = /^cd\s+(\S+)/
         let rmRe = /^(rm)(\s+)(-\S?r.*?\s+)(\S+)/
+        let gcDeleteRe = /gcloud\s+compute\s+instances\s+delete/
         
         let safe = true
         let baseDir = '/'
@@ -455,6 +456,7 @@ class SSHClient {
             // console.log({cmds})
             let cd = cmd.match(cdRe)
             let rm = cmd.match(rmRe)
+            let gcDelete = cmd.match(gcDeleteRe)
     
             if(cd && cd[1]) {
                 let dir = cd[1]
@@ -486,6 +488,11 @@ class SSHClient {
                     safe = false
                 }
             }
+            
+            if(gcDelete){
+                safe = false
+            }
+            
         }
         return safe
     }
