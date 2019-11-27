@@ -2,6 +2,8 @@
 'use strict';
 
 const Program = require('../').Program
+const Shell = require('../').Shell
+const SSHClient = require('../').SSHClient
 const HOSTS = ['sofia-dev-web1.out','sofia-dev-web2.out']
 
 let program = new Program()
@@ -17,16 +19,18 @@ program
     
     .iterate('hosts', async (host) => {
         
-        await program.shell().exec('date')
+        await new Shell().exec('date')
         
-        let ssh = await program.ssh(host, 'root')
-    
-        if (await ssh.exists('/opt/dopamine/sys-metrics')) {
-            await ssh.chdir('/opt/dopamine/sys-metrics')
-            await ssh.exec('git describe --tags')
-            await ssh.exec('systemctl status sys-metrics | grep Active')
+        let ssh = await new SSHClient().connect({ host: host, username: 'root'})
+
+        if (await ssh.exists('/opt/dopamine/exporters/sysmetrics_exporter')) {
+            await ssh.chdir('/opt/dopamine/exporters/sysmetrics_exporter')
+            await ssh.exec('git log -5 --oneline')
+            await ssh.exec('systemctl status sysmetrics | grep Active')
         }
         else {
             console.info('Oups, there are no sys-metrics here..')
         }
+    
+        await ssh.disconnect()
     })

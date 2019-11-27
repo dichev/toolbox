@@ -3,7 +3,7 @@
 const assert = require('assert')
 const Tester = require('../src/tools/Tester')
 const MySQL = require('../src/tools/MySQL')
-const SSHClient = require('../src/tools/SSHClient')
+const Utils = require('../src/lib/Utils')
 
 let tester = new Tester()
 let it = tester.it
@@ -35,8 +35,7 @@ it('detects not safe SQL statements', async () => {
 
 
 it('detects not safe rm -r commands', async () => {
-    let ssh = new SSHClient()
-    
+
     let fails = [
         'rm -rf /etc',
         'rm -r /root',
@@ -56,7 +55,7 @@ it('detects not safe rm -r commands', async () => {
     ]
     
     for(let sql of fails){
-        assert.ok(ssh.isSafe(sql) === false, `${sql} is not detected as unsafe`)
+        assert.ok(Utils.isSafeCommand(sql) === false, `${sql} is not detected as unsafe`)
     }
     
     let okays = [
@@ -69,7 +68,7 @@ it('detects not safe rm -r commands', async () => {
     ]
 
     for(let sql of okays){
-        assert.ok(ssh.isSafe(sql) === true, `${sql} is detected as unsafe, but should be okay`)
+        assert.ok(Utils.isSafeCommand(sql) === true, `${sql} is detected as unsafe, but should be okay`)
     }
 })
 

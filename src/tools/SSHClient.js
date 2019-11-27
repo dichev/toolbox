@@ -1,10 +1,10 @@
 'use strict';
 
 const util = require('util')
-const path = require('path')
 const SSH2 = require('ssh2'); // TODO: check security
 const Input = require('./Input')
 const console = require('../lib/Console')
+const isSafeCommand = require('../lib/Utils').isSafeCommand
 const fs = require('fs')
 const v = console.verbose
 const colors = require('chalk')
@@ -425,7 +425,7 @@ class SSHClient {
      * Some day this will save the world, I'm sure
      */
     async _protect(cmd) {
-        if(!this.isSafe(cmd)){
+        if(!isSafeCommand(cmd)){
             console.warn('WARNING! Found risky shell commands:')
             console.info(cmd)
             console.warn('Are you sure you know what are you doing?')
@@ -434,70 +434,6 @@ class SSHClient {
                 throw Error('The operation is not approved. Aborting..')
             }
         }
-    }
-    
-    /**
-     * Protect from accidental deletion of restricted server files
-     * United tested method
-     * @param {string} commands
-     * @return {boolean}
-     */
-    isSafe(commands){
-    
-        let filterRe = /^(rm|cd|gcloud)\s+/
-        let cdRe = /^cd\s+(\S+)/
-        let rmRe = /^(rm)(\s+)(-\S?r.*?\s+)(\S+)/
-        let gcDeleteRe = /gcloud\s+compute\s+instances\s+delete/
-        
-        let safe = true
-        let baseDir = '/'
-        let cmds = commands.split(/&&|\|\|/g).map(c => c.trim()).filter(c => filterRe.test(c))
-        for(let cmd of cmds){
-            // console.log({cmds})
-            let cd = cmd.match(cdRe)
-            let rm = cmd.match(rmRe)
-            let gcDelete = cmd.match(gcDeleteRe)
-    
-            if(cd && cd[1]) {
-                let dir = cd[1]
-                if(dir.startsWith('/')) baseDir = dir
-                else baseDir = path.join(baseDir, cd[1])
-            }
-            
-            if(rm && rm[4]){
-                let dir = rm[4]
-                if (!dir.startsWith('/')) {
-                    dir = path.join(baseDir, rm[1])
-                }
-                dir = path.normalize(dir).replace(/\\/g, '/') // protect from /path/../
-                // console.log({dir})
-    
-                let mustNotBeExactly = [
-                    '/home/dopamine/',
-                    '/home/dopamine/*',
-                    '/home/dopamine/production',
-                    '/home/dopamine/production/*',
-                    '/opt/dopamine/',
-                    '/opt/dopamine/*',
-                    '/opt/',
-                    '/opt/*',
-                ]
-                let mustStartWith = [
-                    '/home/dopamine/',
-                    '/opt/',
-                ]
-                
-                if (mustNotBeExactly.includes(dir) || !mustStartWith.find(base => dir.startsWith(base))) {
-                    safe = false
-                }
-            }
-            
-            if(gcDelete){
-                safe = false
-            }
-            
-        }
-        return safe
     }
     
 }

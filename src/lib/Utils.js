@@ -1,5 +1,6 @@
 'use strict'
 
+const path = require('path')
 const _cache = { verbose: null }
 
 class Utils {
@@ -103,6 +104,71 @@ class Utils {
             shuffled[rand] = set[i];
         }
         return shuffled;
+    }
+    
+    
+    /**
+     * Protect from accidental deletion of restricted server files
+     * Unit tested method
+     * @param {string} commands
+     * @return {boolean}
+     */
+    static isSafeCommand(commands){
+    
+        let filterRe = /^(rm|cd|gcloud)\s+/
+        let cdRe = /^cd\s+(\S+)/
+        let rmRe = /^(rm)(\s+)(-\S?r.*?\s+)(\S+)/
+        let gcDeleteRe = /gcloud\s+compute\s+instances\s+delete/
+        
+        let safe = true
+        let baseDir = '/'
+        let cmds = commands.split(/&&|\|\|/g).map(c => c.trim()).filter(c => filterRe.test(c))
+        for(let cmd of cmds){
+            // console.log({cmds})
+            let cd = cmd.match(cdRe)
+            let rm = cmd.match(rmRe)
+            let gcDelete = cmd.match(gcDeleteRe)
+    
+            if(cd && cd[1]) {
+                let dir = cd[1]
+                if(dir.startsWith('/')) baseDir = dir
+                else baseDir = path.join(baseDir, cd[1])
+            }
+            
+            if(rm && rm[4]){
+                let dir = rm[4]
+                if (!dir.startsWith('/')) {
+                    dir = path.join(baseDir, rm[1])
+                }
+                dir = path.normalize(dir).replace(/\\/g, '/') // protect from /path/../
+                // console.log({dir})
+    
+                let mustNotBeExactly = [
+                    '/home/dopamine/',
+                    '/home/dopamine/*',
+                    '/home/dopamine/production',
+                    '/home/dopamine/production/*',
+                    '/opt/dopamine/',
+                    '/opt/dopamine/*',
+                    '/opt/',
+                    '/opt/*',
+                ]
+                let mustStartWith = [
+                    '/home/dopamine/',
+                    '/opt/',
+                ]
+                
+                if (mustNotBeExactly.includes(dir) || !mustStartWith.find(base => dir.startsWith(base))) {
+                    safe = false
+                }
+            }
+            
+            if(gcDelete){
+                safe = false
+            }
+            
+        }
+        return safe
     }
     
 }
