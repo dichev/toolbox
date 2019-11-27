@@ -13,6 +13,8 @@ const icons = {
     PACKAGE: 'https://cdn-eu.cloudedge.info/icons/package.png?v=3',
 }
 
+const MESSAGE_LENGTH_LIMIT = 4096 // characters
+
 class GoogleChat {
     
     /**
@@ -52,7 +54,7 @@ class GoogleChat {
         if(!silent) console.info(text)
         if(popup) text = '<users/all> ' + text.trim()
         return this._send({
-            text: text.trim()
+            text: this._sanitizeMessage(text)
         })
     }
     
@@ -62,28 +64,29 @@ class GoogleChat {
             cards: [{
                 header: {title: title, imageUrl: GoogleChat.icons.WARN, imageStyle: 'IMAGE'},
                 sections: [{
-                    widgets: [{textParagraph: {text: text}}]
+                    widgets: [{textParagraph: {text: this._sanitizeMessage(text)}}]
                 }]
             }]
         })
     }
     
-    async error(title, text, {silent = false, popup = false} = {}){
+    async error(title, text = '', {silent = false, popup = false} = {}){
         if(!silent) console.error('[chat]', title, text)
         return this._send({
             cards: [{
                 header: {title: title, imageUrl: GoogleChat.icons.ERROR, imageStyle: 'IMAGE'},
                 sections: [{
-                    widgets: [{textParagraph: {text: text}}]
+                    widgets: [{textParagraph: {text: this._sanitizeMessage(text) }}]
                 }]
             }]
         })
     }
     
-    async announce(html, { title = '', subtitle = '', icon = '', color = '', bold = true, buttons = [], silent = false } = {}) {
+    async announce(html = '', { title = '', subtitle = '', icon = '', color = '', bold = true, buttons = [], silent = false } = {}) {
         if(!silent) console.info(html, title)
         if (!this.enabled) return
-        
+    
+        html = this._sanitizeMessage(html)
         if(bold)  html = `<b>${html}</b>`
         if(color) html = `<font color="${toHex(color)}">${html}</font>`
         
@@ -155,6 +158,14 @@ class GoogleChat {
         return result
     }
     
+    _sanitizeMessage(text){
+		if(!text) return text
+
+        if (text.length > MESSAGE_LENGTH_LIMIT) {
+            text = text.substr(0, MESSAGE_LENGTH_LIMIT - 2) + '..'
+        }
+        return text.trim()
+    }
 }
 
 GoogleChat.icons = icons
