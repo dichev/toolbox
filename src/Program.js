@@ -28,6 +28,7 @@ const isWin = os.platform() === 'win32'
 const titleCase = (str) => str.replace(/\b\S/g, t => t.toUpperCase())
 const stripAnsi = require('strip-ansi')
 const fs = require('fs')
+const deprecate = require('util').deprecate
 
 class Program {
     
@@ -54,6 +55,12 @@ class Program {
         process.on('uncaughtException', async (err) => await this._uncaughtException(err))
         process.on('unhandledRejection', async (reason) => await this._uncaughtRejection(reason))
         process.on('SIGINT', async () => await this._onInterruptSignal());
+        
+        // warnings for the deprecated methods:
+        this.ssh    = deprecate(this.ssh.bind(this), colors.yellow('program.ssh() is deprecated and soon will be removed. Please update your code..'))
+        this.shell  = deprecate(this.shell.bind(this), colors.yellow('program.shell() is deprecated and soon will be removed. Please update your code..'))
+        this.mysql  = deprecate(this.mysql.bind(this), colors.yellow('program.mysql() is deprecated and soon will be removed. Please update your code..'))
+        this.tester = deprecate(this.tester.bind(this), colors.yellow('program.tester() is deprecated and soon will be removed. Please update your code..'))
     }
     
     /**
