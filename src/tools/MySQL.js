@@ -340,6 +340,12 @@ class MySQL {
             console.warn(`Please remove it from the SQL statement and replace all delimiters with the standard ; - it will work fine`)
             throw Error('DELIMITER is not supported sql constant. Aborting..')
         }
+    
+    
+        if (this.inTransaction && this.hasDDL(SQL)) {
+            console.warn(this._prefix + `Detected DDL statement during active transaction! This will commit the transaction and it can not be rollbacked on error. Query: "` + SQL.trim() + '"')
+        }
+    
     }
     
     /**
@@ -353,6 +359,10 @@ class MySQL {
     
     hasDelimiter(SQL){
         return /^ *DELIMITER +.+/gmi.test(SQL) === true
+    }
+    
+    hasDDL(SQL){
+        return /(ALTER\s|RENAME\s|TRUNCATE\s|CREATE\s+(?!TEMPORARY)|DROP\s+(?!TEMPORARY)|OPTIMIZE\s|GRANT\s|REVOKE\s)/gmi.test(SQL) === true
     }
     
     
