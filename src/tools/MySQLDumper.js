@@ -161,7 +161,7 @@ class MySQLDumper {
         
         if(exportSchema || exportData) {
             v('Exporting:')
-            for (let names of [tables, views])
+            for (let {names, isView} of [{ names: tables, isView: false}, {names: views, isView: true}]) {
                 for (let name of names) { // TODO: use parallelLimit (order will be not guaranteed)
                     v(' -', name)
                     if (exportSchema) {
@@ -169,10 +169,11 @@ class MySQLDumper {
                         yield structure
                     }
             
-                    if (exportData) {
+                    if ((exportData && !isView) || (exportViewData && isView)){
                         yield* this._dumpData(name, excludeColumns[name], reorderColumns[name], filterRows[name], maxChunkSize, exportGeneratedColumnsData)
                     }
                 }
+            }
         }
     }
     

@@ -210,14 +210,14 @@ class MySQL {
         }
     }
     
-    async dump({exportSchema = true, exportData = false, exportGeneratedColumnsData = false, sortKeys = false, maxChunkSize = 1000, dest = null, modifiers = [], excludeTables = [], includeTables = [], excludeColumns = {}, reorderColumns = {}, returnOutput = false}){
+    async dump({exportSchema = true, exportData = false, exportViewData = false, exportGeneratedColumnsData = false, sortKeys = false, maxChunkSize = 1000, dest = null, modifiers = [], excludeTables = [], includeTables = [], excludeColumns = {}, reorderColumns = {}, returnOutput = false}){
         let dumper = new MySQLDumper(this)
-        return await dumper.dump({exportSchema, exportData, exportGeneratedColumnsData, sortKeys, maxChunkSize, dest, modifiers, excludeTables, includeTables, excludeColumns, reorderColumns, returnOutput})
+        return await dumper.dump({exportSchema, exportData, exportViewData, exportGeneratedColumnsData, sortKeys, maxChunkSize, dest, modifiers, excludeTables, includeTables, excludeColumns, reorderColumns, returnOutput})
     }
     
-    dumpStream({exportSchema = true, exportData = false, exportGeneratedColumnsData = false, sortKeys = false, maxChunkSize = 1000, dest = null, modifiers = [], excludeTables = [], includeTables = [], excludeColumns = {}, reorderColumns = {}}){
+    dumpStream({exportSchema = true, exportData = false, exportViewData = false, exportGeneratedColumnsData = false, sortKeys = false, maxChunkSize = 1000, dest = null, modifiers = [], excludeTables = [], includeTables = [], excludeColumns = {}, reorderColumns = {}}){
         let dumper = new MySQLDumper(this)
-        return dumper.dumpStream({exportSchema, exportData, exportGeneratedColumnsData, sortKeys, maxChunkSize, dest, modifiers, excludeTables, includeTables, excludeColumns, reorderColumns})
+        return dumper.dumpStream({exportSchema, exportData, exportViewData, exportGeneratedColumnsData, sortKeys, maxChunkSize, dest, modifiers, excludeTables, includeTables, excludeColumns, reorderColumns})
     }
     
     
