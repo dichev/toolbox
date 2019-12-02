@@ -144,29 +144,36 @@
     }
     
     {
-
-        const dump = require('../').MySQLDumper.dump
-        await dump({
-            connection: {
-                host: 'localhost',
-                user: 'root',
-                password: '',
-                database: 'mysql',
-                ssh: null
-            },
-
+    
+        const MySQLDumper = require('dopamine-toolbox').MySQLDumper
+        const MySQL = require('dopamine-toolbox').MySQL
+    
+        let db = new MySQL().connect({host: 'localhost', user: 'root', password: '', database: 'mysql'})
+        let dumper = new MySQLDumper(db)
+    
+        await dumper.dump({ // or use the shorthand: await db.dump({
+        
             dest: './dump.sql',
-
+        
             modifiers: [
                 (output) => output.replace(/ AUTO_INCREMENT=\d+/g, '')
             ],
-
+        
             excludeTables: ['innodb_index_stats', 'innodb_table_stats'],
             excludeColumns: {
                 'help_topic': ['example', 'description']
             },
             sortKeys: true,
             exportData: true // be careful with this option on mirrors
+        
+            // more options:
+            //   includeTables = []
+            //   excludeColumns = {}
+            //   reorderColumns = {}
+            //   filterRows = {}
+            //   maxChunkSize = 1000
+            //   exportGeneratedColumnsData = false
+            //   returnOutput = false
         })
 
     }

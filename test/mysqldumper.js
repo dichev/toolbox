@@ -11,28 +11,7 @@ if(verboseLevel === 0) throw Error('Please run the test with verbose parameter: 
 if(!fs.existsSync(DIR)) fs.mkdirSync(__dirname + '/tmp')
 
 ;(async () => {
-    
-    // Test static
-    await MySQLDumper.dump({
-        connection: {
-            host: 'localhost',
-            user: 'root',
-            password: '',
-            database: 'mysql',
-        },
-        
-        dest: DIR + '/dump-full.sql',
-        
-        excludeTables: ['innodb_index_stats', 'innodb_table_stats'],
-        excludeColumns: {
-            'help_topic': ['example', 'description']
-        },
-        
-        maxChunkSize: 100,
-        exportData: true,
-        sortKeys: true,
-    })
-    
+
     
     // Test as MySQL
     let db = await new MySQL().connect({

@@ -28,6 +28,7 @@ const USAGE = `
  * @property {object} filterRows = {}
  * @property {int} maxChunkSize = 1000
  * @property {boolean} exportData = false
+ * @property {boolean} exportViewData = false
  * @property {boolean} exportSchema = true
  * @property {boolean} exportGeneratedColumnsData = false
  * @property {boolean} sortKeys = false
@@ -36,24 +37,6 @@ const USAGE = `
 
 
 class MySQLDumper {
-    
-    /**
-     * @deprecated
-     * @param {Options} options
-     * @return {string}
-     */
-    static async dump(options) {
-        console.warn(`MySQLDumper: The static method MySQLDumper.dump() is deprecated. Please switch to the new model: ${USAGE}`)
-        if(!options.connection) throw Error('Missing connection configuration')
-
-        const MySQL = require('./MySQL')
-        let db = await new MySQL().connect(options.connection)
-        let dumper = new MySQLDumper(db)
-        let output = await dumper.dump(options)
-        await db.disconnect()
-        return output
-    }
-    
     
     /**
      * @param {MySQL}  connection
