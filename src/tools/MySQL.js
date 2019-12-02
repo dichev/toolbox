@@ -224,17 +224,20 @@ class MySQL {
     async beginTransaction() {
         if(this.inTransaction) throw Error('MySQL wrong query flow: trying to begin a transaction while you are already in a transaction')
         this.inTransaction = true
+        vv(`${this._prefix}START TRANSACTION`)
         return await this._db.beginTransaction()
     }
     
     async commit(){
         if(!this.inTransaction) throw Error('MySQL wrong query flow: trying to commit a transaction, but there is no active transaction')
         this.inTransaction = false
+        vv(`${this._prefix}COMMIT`)
         return await this._db.commit()
     }
     
     async rollback(){
         this.inTransaction = false
+        vv(`${this._prefix}ROLLBACK`)
         return await this._db.rollback()
     }
     
