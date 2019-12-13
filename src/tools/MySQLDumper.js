@@ -5,18 +5,6 @@ const {Readable, Transform, Stream} = require('stream')
 const NEW_LINE = require('os').EOL
 const {v, vv, vvv} = require('../lib/Console')
 
-const USAGE = `
-    let db = await new MySQL().connect({user, host, password}, ssh)
-    await db.dump({ .. })
-    await db.disconnect()
-    
-    // or
-    
-    let dumper = new MySQLDumper(db)
-    await dumper.dump({ .. })
-    await db.disconnect()
-`
-
 /**
  * @typedef  {Object} Options
  * @property {string|WritableStream|null} dest = null
@@ -173,7 +161,7 @@ class MySQLDumper {
         
         let SQL_GET_TABLE_NAMES = `SELECT TABLE_TYPE, TABLE_NAME FROM information_schema.TABLES
                                    WHERE TABLE_SCHEMA = '${database}' ${filter}
-                                   ORDER BY TABLE_SCHEMA ASC, TABLE_NAME ASC`
+                                   ORDER BY TABLE_SCHEMA, TABLE_NAME`
         
         let [results] = await this.connection.query(SQL_GET_TABLE_NAMES, [], {withFieldsInfo: true})
         

@@ -135,7 +135,7 @@ class SSHClient {
             const LOGFILE = remoteLogFile || `/tmp/nohup.${Date.now()}.${(Math.round(Math.random()*100000))}.out`
     
             console.log(`Executing command in nohup, logging here: ${LOGFILE}`)
-            console.warn('WARNING! This command will continue exection even if script is stopped')
+            console.warn('WARNING! This command will continue execution even if script is stopped')
             cmd = `
                 set -e
                 touch ${LOGFILE}
