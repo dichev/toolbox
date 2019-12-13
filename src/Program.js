@@ -112,7 +112,10 @@ class Program {
             if(def === 'all') def = choices.join(',')
             else if (!choices.includes(def)) throw Error(`The default option(${def}) is not allowed as choices`)
         }
-        if(choices) description += `. Available: ${choices}`
+        if(choices) {
+            description += `. Available: `
+            description += choices.length > 16 ? choices.slice(0, 15).join(', ') + ` (.. ${choices.length - 16} more)` : choices.join(', ')
+        }
         if(required) {
             description = '[required] ' + description
             let parts = flags.split(', ')
@@ -158,12 +161,6 @@ class Program {
             .option('--no-chat', 'Disable chat notification if they are activated')
 
         commander.usage(this._usage)
-        if (this._exampleUsage) {
-            commander.on('--help', () => {
-                console.log('\n  Example usage:')
-                console.log(this._exampleUsage.trim().split('\n').map(s => '    ' + s.trim()).join('\n'));
-            })
-        }
     
         // ugly but it works as once Niki said
         commander.helpInformationOrigin = commander.helpInformation
@@ -172,6 +169,12 @@ class Program {
             help = help.replace(/(Usage:) (\S+)/, '$1 node ' + this.name.command + '/' + this.name.action)
             help = help.replace(/(Options:\n)\n/, '$1')
             help = help.replace(/( {2}-p, --parallel)/, '\nAdditional Options:\n$1')
+            
+            if (this._exampleUsage) {
+                help += '\n  Example usage:\n'
+                help += this._exampleUsage.trim().split('\n').map(s => '    ' + s.trim()).join('\n')
+            }
+            
             return help
         }
     
