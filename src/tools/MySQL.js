@@ -7,7 +7,7 @@ const MySQLDumper = require('./MySQLDumper')
 const console = require('../lib/Console')
 const {v, vv, vvv} = require('../lib/Console')
 const colors = require('chalk')
-const sleep = (sec) => new Promise((resolve) => setTimeout(resolve, sec * 1000))
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 const DRY_RUN = (process.argv.findIndex(arg => arg === '--dry-run') !== -1)
 
@@ -100,8 +100,12 @@ class MySQL {
      * @return {Promise<MySQL>}
      */
     async disconnect(){
-        if (this._db) await this._db.end()
-        v(`${this._prefix} disconnected`)
+        if (this._db) {
+            await this._db.end()
+            await sleep(10) // give 10ms free time to mysql to avoid race condition where the SSH connection is closed before the myslq connection
+            v(`${this._prefix} disconnected`)
+        }
+        
         if (this._ssh) await this._ssh.disconnect()
         this._db = this._ssh = null
         this._prefix = '[mysql]'
@@ -312,7 +316,7 @@ class MySQL {
         v(`${this._prefix} Detected ${threads} active connections`)
         if(threads > t.connections){
             console.warn(`[mysql] Pausing query execution due high load: ${threads} connections (${t.connections} limit)`)
-            await sleep(t.interval)
+            await sleep(t.interval * 1000)
             return this._waitOnHighLoad()
         }
     }
