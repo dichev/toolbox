@@ -4,6 +4,7 @@ const fs = require('fs')
 const {Readable, Transform, Stream} = require('stream')
 const NEW_LINE = require('os').EOL
 const {v, vv, vvv} = require('../lib/Console')
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
 /**
  * @typedef  {Object} Options
@@ -62,6 +63,8 @@ class MySQLDumper {
             if(options.returnOutput) sql += chunk
         }
     
+        await sleep(10) // TODO: workaround, there is a bug here - the last chunk could be not yet written to the disk. must be fixed!
+        
         if (dest) v('The database is dumped: ' + (dest.path || dest))
         
         return sql
