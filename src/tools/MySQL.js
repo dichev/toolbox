@@ -102,7 +102,7 @@ class MySQL {
     async disconnect(){
         if (this._db) {
             await this._db.end()
-            await sleep(50) // give 10ms free time to mysql to avoid race condition where the SSH connection is closed before the myslq connection
+            await sleep(50) // give some free time to mysql to avoid race condition where the SSH connection is closed before the myslq connection
             v(`${this._prefix} disconnected`)
         }
         
