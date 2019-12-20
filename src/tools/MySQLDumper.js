@@ -63,7 +63,8 @@ class MySQLDumper {
             if(options.returnOutput) sql += chunk
         }
     
-        await sleep(50) // TODO: workaround, there is a bug here - the last chunk could be not yet written to the disk. must be fixed!
+        // this issue happen only (and rarely) in docker containers, should be investigated
+        // await sleep(50) // TODO: workaround, there is a bug here - the last chunk could be not yet written to the disk. must be fixed!
         
         if (dest) v('The database is dumped: ' + (dest.path || dest))
         
