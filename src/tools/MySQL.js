@@ -119,9 +119,10 @@ class MySQL {
      * @param {object}  options
      * @param {boolean} options.stream
      * @param {boolean|null} options.withFieldsInfo
+     * @param {boolean} [options.allowInDryRun]
      * @return {Promise<Array|ReadableStream>}
      */
-    async query(SQL, params = [], { stream = false, withFieldsInfo = null } = {}){
+    async query(SQL, params = [], { stream = false, withFieldsInfo = null, allowInDryRun = false } = {}){
         if(typeof SQL !== 'string') throw Error('Invalid query, expected string but received ' + typeof SQL)
         if(!SQL) throw Error('Invalid empty query')
         
@@ -137,7 +138,7 @@ class MySQL {
         if(this._protectFromDangerQueries) {
             await this._protect(SQL)
         }
-        if(DRY_RUN) return []
+        if(DRY_RUN && allowInDryRun == false) return []
         
         if(this._thresholds.enabled) await this._waitOnHighLoad()
         
