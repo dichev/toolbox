@@ -27,7 +27,15 @@ class Eta {
      */
     getEta() {
         let average = this.getAverage()
-        return Duration.fromMillis(average * this._iterations).toFormat('hh:mm:ss')
+        let totalMillis = average * this._iterations
+        let duration = Duration.fromMillis(totalMillis)
+        
+        let secs = totalMillis / 1000
+        let format = "s's'"
+        if (secs > 60) format = "m'm' " + format
+        if (secs > 60 * 60) format = "h'h' " + format
+        if (secs > 60 * 60 * 24) format = "d'd' " + format
+        return duration.toFormat(format)
     }
     
     /**
