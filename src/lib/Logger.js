@@ -81,7 +81,7 @@ class Logger {
         return this._dbRecordId
     }
 
-    async _logGrafanaAnnotation(source, info) {
+        async _logGrafanaAnnotation(source, info) {
         if (source === 'start') {
             try {
                 let debugInfo = JSON.parse(info.debugInfo)
@@ -105,6 +105,8 @@ class Logger {
                 }
 
                 if (info.action.includes('cdn/')) {
+                    if (info.action.includes('cdn/cachebust')) options.body.tags.push("cachebust")
+                    if (info.action.includes('cdn/update')) options.body.tags.push("update")
                     options.body.tags.push("frontend")
                 } else if (info.action.includes('hermes/')) {
                     options.body.tags.push("backend")
