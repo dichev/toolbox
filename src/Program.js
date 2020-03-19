@@ -11,10 +11,6 @@
  */
 
 const Input = require('./tools/Input')
-const Shell = require('./tools/Shell')
-const Tester = require('./tools/Tester')
-const MySQL = require('./tools/MySQL')
-const SSHClient = require('./tools/SSHClient')
 const console = require('./lib/Console')
 const colors = require('chalk')
 const Pattern = require('./lib/Pattern')
@@ -24,11 +20,9 @@ const Utils = require('./lib/Utils')
 const Chat = require('./plugins/GoogleChat')
 const commander = require('commander')
 const os = require('os')
-const isWin = os.platform() === 'win32'
 const titleCase = (str) => str.replace(/\b\S/g, t => t.toUpperCase())
 const stripAnsi = require('strip-ansi')
 const fs = require('fs')
-const deprecate = require('util').deprecate
 
 class Program {
     
@@ -40,7 +34,6 @@ class Program {
         this._icon = ''
         this._usage = ''
         this._exampleUsage = ''
-        this._pools = { ssh: [], db: []}
         this._dryRun = false
         this._requiredFlags = []
         this._smartForce = smartForce
@@ -56,12 +49,7 @@ class Program {
         process.on('unhandledRejection', async (reason) => await this._uncaughtRejection(reason))
         process.on('SIGINT', async () => await this._onInterruptSignal());
         
-        // warnings for the deprecated methods:
-        this.ssh    = deprecate(this.ssh.bind(this), colors.yellow('program.ssh() is deprecated and soon will be removed. Please update your code..'))
-        this.shell  = deprecate(this.shell.bind(this), colors.yellow('program.shell() is deprecated and soon will be removed. Please update your code..'))
-        this.mysql  = deprecate(this.mysql.bind(this), colors.yellow('program.mysql() is deprecated and soon will be removed. Please update your code..'))
-        this.tester = deprecate(this.tester.bind(this), colors.yellow('program.tester() is deprecated and soon will be removed. Please update your code..'))
-    }
+   }
     
     /**
      * @param {string} url
@@ -232,7 +220,6 @@ class Program {
         
             await this._before()
             await fn()
-            this.destroy()
             await this._after()
         }
         catch (err) {
@@ -275,7 +262,6 @@ class Program {
                     if (!quiet) await this.chat.message(`*Executing on ${host}*`, {silent: true})
                     return fn(host)
                 })
-                this.destroy() // TODO: could keep open a lot connections
             }
             else {
                 let i = 0
@@ -290,7 +276,6 @@ class Program {
                         if (!quiet) await this.chat.message(`Waiting between iterations (${this.params.wait} sec)`, { silent: true })
                         await this.sleep(this.params.wait, 'waiting')
                     }
-                    this.destroy()
                 }
             }
     
@@ -419,84 +404,6 @@ class Program {
             return await input.ask(question, choices, def)
     }
     
-    /**
-     * @deprecated
-     * @param {string} host
-     * @param {string} user
-     * @param {string} [cmd]
-     * @return {Promise<SSHClient>|null}
-     */
-    async ssh(host, user, cmd = ''){
-        let ssh = new SSHClient()
-        await ssh.connect({
-            host: host,
-            username: user,
-            agent: isWin ? 'pageant' : process.env.SSH_AUTH_SOCK,
-            agentForward: true
-        })
-    
-        this._pools.ssh.push(ssh)
-        
-        if(cmd){
-            try {
-                await ssh.exec(cmd)
-            } catch (err) {
-                await ssh.disconnect()
-                throw err
-            }
-            return null
-        }
-        else {
-            this._pools.ssh.push(ssh)
-            return ssh
-        }
-    }
-    
-    /**
-     * @deprecated
-     * @param {object} cfg
-     * @return {Promise<MySQL>}
-     */
-    async mysql(cfg = {}) {
-        let db = new MySQL()
-        let ssh = null
-        if(cfg.ssh) {
-            if(cfg.ssh instanceof SSHClient) ssh = cfg.ssh
-            else ssh = await this.ssh(cfg.ssh.host, cfg.ssh.user)
-        }
-        await db.connect(cfg, ssh)
-        this._pools.db.push(db)
-        return db
-    }
-   
-    /**
-     * @deprecated
-     * @return Shell
-     */
-    shell(){
-        return new Shell()
-    }
-    
-    /**
-     * @deprecated
-     * @param {string} [prefix] - used when run in parallel mode
-     * @return {Tester}
-     */
-    tester(prefix = ''){
-        let parallel = this.params.parallel !== undefined
-        return new Tester(parallel ? prefix : '', parallel)
-    }
-
-    
-    destroy(){
-        while (this._pools.db.length) {
-            this._pools.db.shift().disconnect()
-        }
-        while (this._pools.ssh.length) {
-            this._pools.ssh.shift().disconnect()
-        }
-    }
-    
     
     sleep(sec = 1, msg = '') {
         if (msg) console.info(msg, `(${sec}s)`)
@@ -543,7 +450,6 @@ class Program {
         if(err.stack) console.verbose(err.stack)
         
         if(this.isRun) {
-            this.destroy()
             if(this.chat.enabled || this.logger.enabled) {
                 msg = stripAnsi(msg).replace(/\n/g, '<br/>')
                 this.chat.error(`${this.name.action} | Aborting due error`, msg, {silent: true, popup: true}).catch(console.error)
