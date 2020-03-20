@@ -2,8 +2,8 @@
 
 A bunch of tools used to simplify the development of automation scripts and commands in NodeJS.
 
-This document contains a list of code snippets and examples how to use them. 
-The additional options of each tool is (partially) documented only inside their source code, so please use IDE for code completion.
+This document contains a list of code snippets and examples of how to use them. 
+The additional options of each tool are (partially) documented only inside their source code, so please use IDE for code completion.
  
 * **[Usage](#Usage)**
 * **[Tools](#Tools)**
@@ -20,11 +20,11 @@ The additional options of each tool is (partially) documented only inside their 
 * **[Lib](#Lib)**
     * **[Console](#Console)**
     * **[Logger](#Logger)**
-* **[Known Issues](#Known Issues)**
+* **[Known Issues](#KnownIssues)**
 
 ## Usage
 
-Note all examples use **async await**, so to be able to test just wrap them inside this construction:
+Note all examples use **async await**, so to be able to test, just wrap them inside this construction:
 ```javascript
 #!/usr/bin/env node
 'use strict';
@@ -36,7 +36,7 @@ Note all examples use **async await**, so to be able to test just wrap them insi
     
 })().catch(console.error).then(() => console.log('done'))
 ``` 
-If you use the Program tool you could wrap them there:
+If you use the Program tool, you could wrap them there:
 ```javascript
 #!/usr/bin/env node
 'use strict';
@@ -54,9 +54,9 @@ program.run(async () => {
 ## <a name="Tools"></a>Tools
 
 #### <a name="Program"></a>Program 
-This is the must have lib for all commands. 
-It's responsible for parsing cli arguments, generating help, running in parallel, etc.. 
-If it is used then your script will directly support following cli arguments:
+This is the must-have lib for all commands. 
+It's responsible for parsing cli arguments, generating help, running in parallel, etc. 
+If it is used, then your script will directly support the following cli arguments:
 ```bash
   Additional Options:
     -p, --parallel [limit]  When run with multiple hosts define how many commands to be executed in parallel. Set to 0 execute them all together. By default will be executed sequentially
@@ -71,7 +71,7 @@ If it is used then your script will directly support following cli arguments:
 ```
 
 
-Here is example how to made very simple command:
+Here is an example of how to make a basic command:
 ```javascript
 #!/usr/bin/env node
 'use strict';
@@ -87,7 +87,7 @@ program
         console.log('Passed parameters:', program.params)
     })
 ```
-Save it as example.js and then you are ready to run in shell:
+Save it as example.js, and then you are ready to run in shell:
 ```bash
 node example.js --help
 node example.js --hosts hostA,hostB
@@ -95,7 +95,7 @@ node example --hosts all
 ./example --hosts hostA
 ```
 
-If you want to run you command multiple times over list of arguments then try this 
+If you want to run your command multiple times over a list of arguments, then try this 
 
 ```javascript
 #!/usr/bin/env node
@@ -117,7 +117,7 @@ node example --hosts all
 node example --hosts all --parallel
 ```
 
-Here is an example how some useful command should look:
+Here is an example of how some useful commands should look:
 ```javascript
 const Program = require('dopamine-toolbox').Program
 const HOSTS = ['dev-hermes-web1.out','dev-hermes-web2.out']
@@ -166,8 +166,8 @@ await shell.exec(`
 ```
 The execution will be done in **bash with "set -e" mode activated** (to avoid mistakes in multi-line scripts)
 
-The shell doesn't support any fancy functions like shell.git(), shell.find(), shell.mkdir(), etc.. by reason.
-The idea is to not abstract the standard shell commands and to let sysadmin guys to write automation in the way the know best, aka piping
+The shell doesn't support any fancy functions like shell.git(), shell.find(), shell.mkdir(), etc. by reason.
+The idea is to not abstract the standard shell commands and to let sysadmin guys to write automation in the way they know best, aka piping
 
 #### <a name="Input"></a>Input 
 Provide async methods for user cli input
@@ -179,7 +179,7 @@ let answer = await input.ask('What color?', ['yellow', 'blue', 'green'], 'green'
 await input.confirm('Are you sure you want to continue?')
 console.log('continue only if is confirmed')
 ```
-Optionally the typed answers could be saved between sessions in a file. 
+Optionally, the typed answers could be saved between sessions in a file. 
 This is very useful to store commands history, like in shell
 ```javascript
 const Input = require('../').Input
@@ -204,7 +204,7 @@ console.log('continue only if is confirmed')
 
 
 #### <a name="Tester"></a>Tester 
-Super simple test framework without 1 million dependencies
+Super simple test framework without one million dependencies
 ```javascript
 const Tester = require('dopamine-toolbox').Tester
 const assert = require('assert')
@@ -227,7 +227,7 @@ await tester.run(false)
 Adapter over ssh2 lib - https://github.com/mscdex/ssh2
 
 
-Basically it support async await methods and it has built in protection against "rm -rf"
+Basically, it supports async await methods, and it has built-in protection against "rm -rf"
 ```javascript
 const SSHClient = require('dopamine-toolbox').SSHClient
 
@@ -253,7 +253,7 @@ The execution will be done **with "set -e" mode activated** for multi-line scrip
 #### <a name="MySQL"></a>MySQL 
 Adapter over mysql2 lib: https://www.npmjs.com/package/mysql2
 
-It has built in protection agains DROP DATABASE statements and server overloading
+It has built-in protection against DROP DATABASE statements and server overloading
 ```javascript
 const MySQL = require('dopamine-toolbox').MySQL
 let db = new MySQL()
@@ -276,7 +276,7 @@ This is customized for our needs mysql dumper. It supports useful options for:
 - SSH connections
 - Output modifiers (like sorted keys)
 - Export data/schema beautification
-- Exporting as readable stream (useful for huge databases)
+- Exporting as a readable stream (useful for huge databases)
 
 ```javascript
 const MySQLDumper = require('dopamine-toolbox').MySQLDumper
@@ -312,7 +312,7 @@ await dumper.dump({ // or use the shorthand: await db.dump({
 ```
 
 ### <a name="Plugins"></a>
-Plugins are just adapters to the API of external third party services
+Plugins are just adapters to the API of external third-party services
 #### <a name="GoogleChat"></a>GoogleChat
 
 ```javascript
@@ -363,7 +363,7 @@ await cf.patch(url, json)
 ```
 ## <a name="Lib"></a>Lib
 #### <a name="Console"></a>Console
-This is extended version of the js console. It basically colorize it and add in addition console.verbose method
+This is an extended version of the js console. It basically colorizes it and adds in addition console. Verbose method
 ```javascript
 const console = require('dopamine-toolbox').lib.console
 
@@ -380,8 +380,8 @@ require('dopamine-toolbox').lib.console.upgrade()
 
 
 #### <a name="Logger"></a>Logger
-This is class which used to log deploy info in database.
-You can use it separately, but its implemented in Program.js, in order to be used in automation project to log the deploy process.
+This is the class used to log deploy info in a database.
+You can use it separately, but it's implemented in Program.js to be used in an automation project to log the deployment process.
 ```javascript
 // variant 1
 new Program({logs: cfg.logs})
@@ -400,14 +400,14 @@ let logger = new Logger(config)
 logger.start(info)
 logger.end(exitCode, msg)
 ```
-You need to setup a database in order to use the database. You can find schema & seed in **./.db/deploy_log.sql**
+You need to set up a database to use the database. You can find schema and seed in **./.db/deploy_log.sql**
 
 
-## <a name="Known Issues"></a>Known Issues
+## <a name="KnownIssues"></a>Known Issues
 
-- Some colors in shell are displayed as ANSI codes in Windows MinGW64 (mintty)
+- Some colors in the shell are displayed as ANSI codes in Windows MinGW64 (mintty)
 ```bash
 ?[32m hey, I am green ?[39m
 ```
-This happens when child process have colors and it's stdio is attached to the parent process. It seems to be limititation of the terminal emulator, so the best way to fix it is to switch to [ConEmu](https://conemu.github.io/)
+This happens when a child process has colors, and its stdio is attached to the parent process. It seems to be a limitation of the terminal emulator, so the best way to fix it is to switch to [ConEmu](https://conemu.github.io/)
 
